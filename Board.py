@@ -17,6 +17,9 @@ class Board:
             self[chr(97+i)+'2'] = (Board.pieces[0],'white')
             self[chr(97+i)+'7'] = (Board.pieces[0],'black')
 
+    def move(self, move):
+        
+
     def __getitem__(self, key):
         x,y = list(key)
         return self.board[8-int(y)][ord(x)-97]
@@ -40,3 +43,17 @@ class Board:
                 out.append(piece[0]+' ')
             out.append('\n')
         return ''.join(out)
+
+
+def validMove(piece, start, end):
+    x,y = ord(start[0])-97, int(start[1]) - 1
+    X,Y = ord(end[0])-97, int(end[1]) - 1
+    for i in [x,X,y,Y]:
+        if i < 0 or i > 7:
+            return False
+
+    if piece == 'R':
+        if x == X or y == Y:
+            return True
+    elif piece = 'B':
+        
