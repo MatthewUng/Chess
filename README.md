@@ -1,2 +1,2 @@
 # Chess
-pet project
+Matt's pet project
