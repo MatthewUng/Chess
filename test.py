@@ -4,4 +4,5 @@ b = Board.Board()
 
 print b
 
-print repr(b)
+print b.pLocW
+print b.pLocB

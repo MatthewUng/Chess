@@ -5,24 +5,31 @@ class Board:
     ep = list()
     castleW, castleB = True, True
     pLocW = dict()
-    plocB = dict()
+    pLocB = dict()
 
     def __init__(self):
-        for piece in pieces:
-            pLoc[piece] = []
         self.reset()
 
     def reset(self):
         self.board = [[(' ','None') for _ in range(8)] for _ in range(8)]
+
+        #resetting piece dict
+        for piece in Board.pieces:
+            Board.pLocW[piece] = set()
+            Board.pLocB[piece] = set()
 
         # 1, 2, ... , len(pieces) - 1
         for i in range(1, len(Board.pieces)):
             for j in Board.initLoc[i-1]:
                 self[j+'1'] = (Board.pieces[i],'white')
                 self[j+'8'] = (Board.pieces[i], 'black')
+                Board.pLocW[Board.pieces[i]] |= set([j+'1'])
+                Board.pLocB[Board.pieces[i]] |= set([j+'8'])
         for i in range(8):
             self[chr(97+i)+'2'] = (Board.pieces[0],'white')
             self[chr(97+i)+'7'] = (Board.pieces[0],'black')
+            Board.pLocW['p'] |= set([chr(97+i)+'2'])
+            Board.pLocB['p'] |= set([chr(97+i)+'2'])
 
     def move(self, move):
         move = move.rstrip('+')
@@ -34,7 +41,6 @@ class Board:
         if move[0] not in pieces:
             return False
 
-        if validmove(    
 
     def __getitem__(self, key):
         x,y = list(key)
@@ -79,7 +85,7 @@ def validMove(piece, start, end):
               
         #same logic as above
         elif y == Y:
-            for i inrange(min(x,X), max(x,X)):
+            for i in range(min(x,X), max(x,X)):
                 if self.board[i][y][1] != 'None':
                     return False
             return True
@@ -95,10 +101,10 @@ def validMove(piece, start, end):
         #negative slope
         elif x+X == y+Y:
             for i in range(1, abs(x-X)):
-                if self.board(min(x,X)+i][max(y,Y)-i][1] != 'None':
+                if self.board[min(x,X)+i][max(y,Y)-i][1] != 'None':
                     return False
             return True
-       return False
+        return False
     
     #endcheck
     if self.board[x][y][1] == self.board[X][Y][1]:
