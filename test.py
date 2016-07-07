@@ -4,5 +4,6 @@ b = Board.Board()
 
 print b
 
-print b.pLocW
-print b.pLocB
+b.move('e4')
+
+print b

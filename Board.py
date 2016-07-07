@@ -2,45 +2,80 @@ class Board:
     pieces = ['p','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
                ['c','f'],['d'],['e']]
-    ep = list()
-    castleW, castleB = True, True
-    pLocW = dict()
-    pLocB = dict()
+    NoPiece = (' ','None')
 
     def __init__(self):
+        self.ep = list()
+        self.castleW, castleB = True, True
+        self.pLocW = dict()
+        self.pLocB = dict()
+        self.moves = 1
+        self.turn = 'white'
         self.reset()
 
     def reset(self):
-        self.board = [[(' ','None') for _ in range(8)] for _ in range(8)]
+        """Resets the Board"""
+        self.board = [[Board.NoPiece for _ in range(8)] for _ in range(8)]
 
         #resetting piece dict
         for piece in Board.pieces:
-            Board.pLocW[piece] = set()
-            Board.pLocB[piece] = set()
+            self.pLocW[piece] = set()
+            self.pLocB[piece] = set()
 
         # 1, 2, ... , len(pieces) - 1
         for i in range(1, len(Board.pieces)):
             for j in Board.initLoc[i-1]:
                 self[j+'1'] = (Board.pieces[i],'white')
                 self[j+'8'] = (Board.pieces[i], 'black')
-                Board.pLocW[Board.pieces[i]] |= set([j+'1'])
-                Board.pLocB[Board.pieces[i]] |= set([j+'8'])
+                self.pLocW[Board.pieces[i]] |= set([j+'1'])
+                self.pLocB[Board.pieces[i]] |= set([j+'8'])
         for i in range(8):
             self[chr(97+i)+'2'] = (Board.pieces[0],'white')
             self[chr(97+i)+'7'] = (Board.pieces[0],'black')
-            Board.pLocW['p'] |= set([chr(97+i)+'2'])
-            Board.pLocB['p'] |= set([chr(97+i)+'2'])
+            self.pLocW['p'] |= set([chr(97+i)+'2'])
+            self.pLocB['p'] |= set([chr(97+i)+'2'])
 
     def move(self, move):
+        """makes a certain move"""
+
+        piecedict = self.pLocW if self.turn == 'white' else self.pLocB
         move = move.rstrip('+')
         move = move.replace('x','')
 
         if not move[0].isupper():
             move = 'p'+move
 
-        if move[0] not in pieces:
+        if move[0] not in Board.pieces:
             return False
+        
+        
+        print piecedict[move[0]]
 
+        moves = [validMove(move[0], x, move[-2:]) \
+          for x in map(Board.atb, piecedict[move[0]])]
+        if sum(moves) != 1:
+            return False
+        else:
+            index = moves.index(True)
+            x,y = bta(move[-2:0])
+            X,Y = bta(piecedict[move[0]][index])
+            self.board[x][y] = move[0]
+            self.board[X][Y] = Board.NoPiece
+            piecedict[move[0]].remove(bta(X,Y))
+            piecedict[move[0]] |= set([move[-2:]])
+        
+            return True 
+
+    @staticmethod
+    def atb(alg):
+        """algebraic notation to board notation"""
+        x,y=list(alg)
+        return (8-int(y),ord(x)-97)
+   
+    @staticmethod
+    def bta(x,y):
+        """board notation to algebraic notation"""
+        return chr(104-x)+str(y+1)
 
     def __getitem__(self, key):
         x,y = list(key)
