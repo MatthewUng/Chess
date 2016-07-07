@@ -4,6 +4,8 @@ b = Board.Board()
 
 print b
 
-b.move('e4')
+b.move('Nf3')
+
+b.move('Nc6')
 
 print b
