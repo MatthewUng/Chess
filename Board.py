@@ -33,7 +33,7 @@ class Board:
             self[chr(97+i)+'2'] = (Board.pieces[0],'white')
             self[chr(97+i)+'7'] = (Board.pieces[0],'black')
             self.pLocW['p'] |= set([chr(97+i)+'2'])
-            self.pLocB['p'] |= set([chr(97+i)+'2'])
+            self.pLocB['p'] |= set([chr(97+i)+'7'])
 
     def update(self):
         if self.turn == "white":
@@ -59,8 +59,8 @@ class Board:
 
         if move[0] not in Board.pieces:
             return False
-        
-        
+       
+
         moves = filter(lambda x: self.validMove(piece, x, loc),\
           piecedict[piece])
 
@@ -85,7 +85,6 @@ class Board:
 
             self.update()
             
-            print piecedict[piece]
 
 
     def __getitem__(self, key):
@@ -138,22 +137,28 @@ class Board:
             return False
         
         def diagCheck(x,y,X,Y):
+
             #positive slope
-            if x-X == y-Y:
+            #x is decremented and y is incremented
+            if x+y == X+Y:
+                
                 for i in range(1, abs(X-x)):
-                    if self.board[min(x,X)+i][min(y,Y)+i][1] != 'None':
-                        return False
-                    return True
-            #negative slope
-            elif x+X == y+Y:
-                for i in range(1, abs(x-X)):
-                    if self.board[min(x,X)+i][max(y,Y)-i][1] != 'None':
+                    if self.board[max(x,X)-i][min(y,Y)+i][1] != 'None':
+                        
                         return False
                 return True
-            return False
+
+            #negative slope
+            #x is incremented and y is incremenmted
+            elif x-X == y-Y:
+                for i in range(1, abs(x-X)):
+                    if self.board[min(x,X)+i][min(y,Y)+i][1] != 'None':
+                        return False
+                return True
         
         #endcheck
         if self.board[x][y][1] == self.board[X][Y][1]:
+            print "end loc taken"
             return False
 
         #checking if values in range
