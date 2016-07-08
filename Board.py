@@ -186,7 +186,33 @@ class Board:
         elif piece == 'Q':
             return fileCheck(x,y,X,Y) or diagCheck(x,y,X,Y)
         
+        elif piece == "p":
+            #t = turn
+            t = 1
+            if self.turn == 'white':
+                t = -1
+            opp = 'white' if self.turn == 'black' else 'black'
 
+            #pawn moves forward one
+            if x == t + X and y == Y and self.board[X][Y] == Board.NoPiece:
+                return True
+
+            #taking pieces
+            elif x == t + X and abs(y-Y) == 1 and self.board[X][Y][1] == opp:
+                return True
+            
+            #moving two steps forward
+            elif ((x == 6 and self.turn == 'white' and X==4 ) \
+              or (x == 1 and self.turn == 'black' and X == 3)) and y == Y \
+              and self.board[x+t][y] == Board.NoPiece:
+
+                return True
+
+            else:
+                return False
+
+
+        
 def atb(alg):
     """algebraic notation to board notation"""
     x,y=list(alg)
