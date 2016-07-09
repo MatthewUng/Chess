@@ -1,24 +1,22 @@
 #TODO: IMPLEMENT EN PASSANT
 #TODO: IMPLEMENT attackRange()
 class Board:
-    pieces = ['p','R','N','B','Q','K']
+    pieces = ['P','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
                ['c','f'],['d'],['e']]
     NoPiece = (' ','None')
 
     def __init__(self):
         self.ep = list()
-        self.castleKW, self.castleKB = True, True
-        self.castleQW, self.castleQB = True, True
         self.pLocW = dict()
         self.pLocB = dict()
-        self.moves = 1
         self.movelist = list()
-        self.turn = 'white'
-        self.reset()
+        self.newGame()
 
     def reset(self):
-        """Resets the Board"""
+        """Resets the Board to blank"""
+        self.ep = list()
+        self.movelist = list()
         self.board = [[Board.NoPiece for _ in range(8)] for _ in range(8)]
 
         #resetting piece dict
@@ -26,6 +24,14 @@ class Board:
             self.pLocW[piece] = set()
             self.pLocB[piece] = set()
 
+    def newGame(self):
+        """sets the board to a new game"""
+        self.reset()
+        self.castleKW, self.castleKB = True, True
+        self.castleQW, self.castleQB = True, True
+        self.moves = 1
+        self.turn = 'white'
+        self.halfmoves = 0
         # 1, 2, ... , len(pieces) - 1
         for i in range(1, len(Board.pieces)):
             for j in Board.initLoc[i-1]:
@@ -36,8 +42,51 @@ class Board:
         for i in range(8):
             self[chr(97+i)+'2'] = (Board.pieces[0],'white')
             self[chr(97+i)+'7'] = (Board.pieces[0],'black')
-            self.pLocW['p'] |= set([chr(97+i)+'2'])
-            self.pLocB['p'] |= set([chr(97+i)+'7'])
+            self.pLocW['P'] |= set([chr(97+i)+'2'])
+            self.pLocB['P'] |= set([chr(97+i)+'7'])
+    
+    def setUp(self, fen):
+        """sets up the board based on FEN"""
+        self.reset()
+        spacesplit = fen.split(' ')
+        p = spacesplit[0].split('/')
+        x,y = 0,0
+        for row in p:
+            y = 0
+            for piece in row:
+                if ord(piece) >= 48 and ord(piece) <= 56:
+                    for _ in range(int(piece)):
+                        self.board[x][y] = Board.NoPiece
+                        y += 1
+                #white piece
+                elif piece.isupper():
+                    self.board[x][y] = (piece.upper(), 'white')
+                    self.pLocW[piece.upper()] |= set([bta(x,y)])
+                    y += 1
+
+                #black piece
+                elif piece.islower():
+                    self.board[x][y] = (piece.upper(), 'black')
+                    self.pLocB[piece.upper()] |= set([bta(x,y)])
+                    y += 1
+
+            #increment row var
+            x += 1
+        self.turn = 'white' if spacesplit[1] == 'w' else 'black'
+        
+        #setting castle vars
+        castle = spacesplit[2]
+        self.castleKW = True if 'K' in castle else False
+        self.castleQW = True if 'Q' in castle else False
+        self.castleKB = True if 'k' in castle else False
+        self.castleQB = True if 'q' in castle else False
+
+        #setting ep variables
+        for i in range(0,len(spacesplit[3]),2):
+            self.ep.append(spacesplit[3][i:i+2])
+        
+        self.halfmoves = int(spacesplit[4])
+        self.moves = int(spacesplit[5])
 
     def update(self):
         if self.turn == "white":
@@ -54,7 +103,7 @@ class Board:
         move = move.replace('x','')
         
         if not move[0].isupper():
-            move = 'p'+move
+            move = 'P'+move
 
         #1st     char should designate piece
         piece = move[0]
@@ -135,7 +184,7 @@ class Board:
 
             #Black Kingside Castle
             elif move == "O-O":
-                 if self.castleBW == False:
+                if self.castleBW == False:
                     return False
                 for index in [5,6]:
                     if self.board[0][index][1] != "None":
@@ -146,15 +195,75 @@ class Board:
                 return True           
            
     def attackRange(self, side):
-        def rookCheck(start):
-            out = set()
-            
+        """determines the squares that a certain side is attacking"""
 
+        def fileCheck(start):
+            """attackRange of file pieces"""
+            x,y = atb(start)
+            out = set()
+            for i in range(1,8-y):
+                if self.board[x][y+i][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x,y+i)])
+
+            for i in range(1,y+1):
+                if self.board[x][y-i][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x,y-i)])
+
+            for i in range(1,8-x):
+                if self.board[x+i][y][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x+i,y)])
+
+            for i in range(1,x+1):
+                if self.board[x-i][y][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x-i,y)])
+            return out
+        
+        def diagCheck(start):
+            """attack range of diag pieces""" 
+            x,y = atb(start)
+            out = set()
+
+            #upper right diag
+            for i in range(1, min(x+1, 8-y)):
+                if self.board[x-i][y+i][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x-i,y+i)])
+
+            #upper left diag 
+            for i in range(1, min(x+1, y+1)):
+                if self.board[x-i][y-i][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x-i,y+i)])
+
+            #lower right diag
+            for i in range(1, min(8-x, 8-y)):
+                if self.board[x+i][y+i][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x+i,y+i)])
+
+            #lower left diag
+            for i in range(1, min(8-x, 8-y)):
+                if self.board[x+i][y-i][1] != 'None':
+                    break
+                else:
+                    out |= set([bta(x+i,y-i)])
+            return out
 
         out = set()
         p = selfpLocW if side == "white" else self.pLocB
         
-        for piece, loc in p.items():
+        #for piece, loc in p.items():
             
     def validMove(self, piece, start, end):
         """determines if a move is valid"""
@@ -235,7 +344,7 @@ class Board:
         elif piece == 'Q':
             return fileCheck(x,y,X,Y) or diagCheck(x,y,X,Y)
         
-        elif piece == "p":
+        elif piece == "P":
             #t = turn
             t = 1
             if self.turn == 'white':
