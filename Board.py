@@ -1,3 +1,5 @@
+#TODO: IMPLEMENT EN PASSANT
+#TODO: IMPLEMENT attackRange()
 class Board:
     pieces = ['p','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
@@ -6,10 +8,12 @@ class Board:
 
     def __init__(self):
         self.ep = list()
-        self.castleW, castleB = True, True
+        self.castleKW, self.castleKB = True, True
+        self.castleQW, self.castleQB = True, True
         self.pLocW = dict()
         self.pLocB = dict()
         self.moves = 1
+        self.movelist = list()
         self.turn = 'white'
         self.reset()
 
@@ -52,7 +56,7 @@ class Board:
         if not move[0].isupper():
             move = 'p'+move
 
-        #1st char should designate piece
+        #1st     char should designate piece
         piece = move[0]
         #last two char should be end loc
         loc = move[-2:]
@@ -84,33 +88,68 @@ class Board:
                 self.moves += 1
 
             self.update()
+            self.movelist.append(move)
+        """
+        self.castleKW, self.castleKB = True, True
+        self.castleQW, self.castleQB = True, True
+        """
+    def validCastle(self, move):
+        if self.turn == "white":
+            #White Queenside Castle
+            if move == "O-O-O":
+                if self.castleQW == False:
+                    return False
+                for index in [1,2,3]:
+                    if self.board[7][index][1] != "None":
+                        return False
+                for square in ['b1','c1','d1']:
+                    if square in self.attackRange('black'):
+                        return False
+                return True
             
+            #White Kingside Castle
+            elif move == "O-O":
+                if self.castleKW == False:
+                    return False
+                for index in [5,6]:
+                    if self.board[7][index][1] != "None":
+                        return False
+                for square in ['f1','g1']:
+                    if square in self.attackRange('black'):
+                        return False
+                return True           
+                    
+        elif self.turn == "black":
+          
+            #Black Queenside Castle
+            if move == "O-O-O":
+                if self.castleQB == False:
+                    return False
+                for index in [1,2,3]:
+                    if self.board[0][index][1] != "None":
+                        return False
+                for square in ['b8','c8','d8']:
+                    if square in self.attackRange('white'):
+                        return False
+                return True           
 
-
-    def __getitem__(self, key):
-        x,y = list(key)
-        return self.board[8-int(y)][ord(x)-97]
-
-    def __setitem__(self, key, value):
-        x,y = list(key)
-        self.board[8-int(y)][ord(x)-97] = value
-
-    def __repr__(self):
-        out = list()
-        for line in self.board:
-            for square in line:
-                out.append(str(square))
-            out.append('\n')
-        return ''.join(out)
-            
-    def __str__(self):
-        out = list()
-        for line in self.board:
-            for piece in line:
-                out.append(piece[0]+' ')
-            out.append('\n')
-        return ''.join(out)
-    
+            #Black Kingside Castle
+            elif move == "O-O":
+                 if self.castleBW == False:
+                    return False
+                for index in [5,6]:
+                    if self.board[0][index][1] != "None":
+                        return False
+                for square in ['f8','g8']:
+                    if square in self.attackRange('white'):
+                        return False
+                return True           
+           
+    def attackRange(self, side):
+        out = set()
+        p = selfpLocW if side == "white" else self.pLocB
+        
+        for piece, loc in p.items():
 
     def validMove(self, piece, start, end):
         """determines if a move is valid"""
@@ -213,8 +252,38 @@ class Board:
 
                 return True
 
+            #ep
+            elif True:
+                pass
             else:
                 return False
+
+
+
+    def __getitem__(self, key):
+        x,y = list(key)
+        return self.board[8-int(y)][ord(x)-97]
+
+    def __setitem__(self, key, value):
+        x,y = list(key)
+        self.board[8-int(y)][ord(x)-97] = value
+
+    def __repr__(self):
+        out = list()
+        for line in self.board:
+            for square in line:
+                out.append(str(square))
+            out.append('\n')
+        return ''.join(out)
+            
+    def __str__(self):
+        out = list()
+        for line in self.board:
+            for piece in line:
+                out.append(piece[0]+' ')
+            out.append('\n')
+        return ''.join(out)
+    
 
 
         
