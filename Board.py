@@ -263,8 +263,20 @@ class Board:
         out = set()
         p = selfpLocW if side == "white" else self.pLocB
         
-        #for piece, loc in p.items():
-            
+        for piece, locSet in p.items():
+            if bool(locSet):
+                if piece == 'Q':
+                    for loc in locSet:
+                        out |= diagCheck(loc)
+                        out |= fileCheck(loc)
+                if piece = 'R':
+                    for loc in locSet:
+                        out |= fileCheck(loc)
+                if piece = 'B':
+                    for loc in locSet:
+                        out |= fileCheck(loc)
+        return out
+
     def validMove(self, piece, start, end):
         """determines if a move is valid"""
         
