@@ -146,11 +146,16 @@ class Board:
                 return True           
            
     def attackRange(self, side):
+        def rookCheck(start):
+            out = set()
+            
+
+
         out = set()
         p = selfpLocW if side == "white" else self.pLocB
         
         for piece, loc in p.items():
-
+            
     def validMove(self, piece, start, end):
         """determines if a move is valid"""
         
