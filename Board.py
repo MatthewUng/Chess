@@ -203,24 +203,32 @@ class Board:
             out = set()
             for i in range(1,8-y):
                 if self.board[x][y+i][1] != 'None':
+                    if self.board[x][y+i][1] != side:
+                        out |= set([bta(x,y+i)])
                     break
                 else:
                     out |= set([bta(x,y+i)])
 
             for i in range(1,y+1):
                 if self.board[x][y-i][1] != 'None':
+                    if self.board[x][y-i][1] != side:
+                        out |= set([bta(x,y-i)])
                     break
                 else:
                     out |= set([bta(x,y-i)])
 
             for i in range(1,8-x):
                 if self.board[x+i][y][1] != 'None':
+                    if self.board[x+i][y][1] != side:
+                        out |= set([bta(x+i,y)])
                     break
                 else:
                     out |= set([bta(x+i,y)])
 
             for i in range(1,x+1):
                 if self.board[x-i][y][1] != 'None':
+                    if self.board[x-i][y][1] != side:
+                        out |= set([bta(x-i,y)])
                     break
                 else:
                     out |= set([bta(x-i,y)])
@@ -232,8 +240,11 @@ class Board:
             out = set()
 
             #upper right diag
+            
             for i in range(1, min(x+1, 8-y)):
                 if self.board[x-i][y+i][1] != 'None':
+                    if self.board[x-i][y+i][1] != side:
+                        out |= set([bta(x-i,y+i)])
                     break
                 else:
                     out |= set([bta(x-i,y+i)])
@@ -241,27 +252,67 @@ class Board:
             #upper left diag 
             for i in range(1, min(x+1, y+1)):
                 if self.board[x-i][y-i][1] != 'None':
+                    if self.board[x-i][y-i][1] != side:
+                        out |= set([bta(x-i,y-i)])
                     break
                 else:
-                    out |= set([bta(x-i,y+i)])
+                    out |= set([bta(x-i,y-i)])
 
             #lower right diag
             for i in range(1, min(8-x, 8-y)):
                 if self.board[x+i][y+i][1] != 'None':
+                    if self.board[x+i][y+i][1] != side:
+                        out |= set([bta(x+i,y+i)])
                     break
                 else:
                     out |= set([bta(x+i,y+i)])
 
             #lower left diag
-            for i in range(1, min(8-x, 8-y)):
+            for i in range(1, min(8-x, y+1)):
                 if self.board[x+i][y-i][1] != 'None':
+                    if self.board[x+i][y-i][1] != side:
+                        out |= set([bta(x+i,y-i)])
                     break
                 else:
                     out |= set([bta(x+i,y-i)])
             return out
 
+        def knightCheck(start):
+            """attack range of knight"""
+            x,y = atb(start)
+            potential = list()
+            for i in [1,-1]:
+                for j in [-2,2]:
+                    potential.append((x+i,y+j))
+            for i in [-2,2]:
+                for j in [-1,1]:
+                    potential.append((x+i,y+j))
+            for tup in potential[:]:
+                if min(tup) < 0 or max(tup) > 7:
+                    potential.remove(tup)
+                elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
+                    potential.remove(tup)
+            return set(map(lambda tup: bta(tup[0],tup[1]), potential))
+
+        def kingCheck(start):
+            """attack range of the king"""
+            x,y = atb(start)
+            potential = list()
+            for i in [-1,0,1]:
+                for j in [-1,0,1]:
+                    if i == j and j == 0:
+                        continue
+                    else:
+                        potential.append((x+i,y+j))  
+            for tup in potential[:]:
+                if min(tup) < 0 or max(tup) > 7:
+                    potential.remove(tup)
+                elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
+                    potential.remove(tup)
+            return set(map(lambda tup: bta(tup[0],tup[1]),potential))
+            
         out = set()
-        p = selfpLocW if side == "white" else self.pLocB
+        p = self.pLocW if side == "white" else self.pLocB
         
         for piece, locSet in p.items():
             if bool(locSet):
@@ -269,12 +320,18 @@ class Board:
                     for loc in locSet:
                         out |= diagCheck(loc)
                         out |= fileCheck(loc)
-                if piece = 'R':
+                if piece == 'R':
                     for loc in locSet:
                         out |= fileCheck(loc)
-                if piece = 'B':
+                if piece == 'B':
                     for loc in locSet:
-                        out |= fileCheck(loc)
+                        out |= diagCheck(loc)
+                if piece == 'N':
+                    for loc in locSet:
+                        out |= knightCheck(loc)
+                if piece == 'K':
+                    for loc in locSet:
+                        out |= kingCheck(loc)
         return out
 
     def validMove(self, piece, start, end):
