@@ -109,21 +109,42 @@ class Board:
                     self.board[t][6] = self.board[t][4]
                     self.board[t][4] = Board.NoPiece
                     piecedict['K'].pop()
-                    piecedict['K'].add('g1')
                     self.board[t][5] = self.board[t][7]
                     self.board[t][7] = Board.NoPiece
-                    rookloc = 'h1' if t == 7 else 'h8'
-                    piecedict['R'].remove(rookloc)
-                    piecedict['R'].add('f1')
+                    if self.turn == white:
+                        piecedict['K'].add('g1')
+                        piecedict['R'].remove('h1')
+                        piecedict['R'].add('f1')
+                    else:
+                        piecedict['K'].add('g8')
+                        piecedict['R'].remove('h8')
+                        piecedict['R'].add('f8')
 
                     if self.turn == 'black':
                         self.moves += 1
-
                     self.update()
                     self.movelist.append(move)
 
                 elif move == "O-O-O":
-                    pass
+                    self.board[t][2] = self.board[t][4]
+                    self.board[t][4] = Board.NoPiece
+                    piecedict['K'].pop()
+                    self.board[t][3] = self.board[t][0]
+                    self.board[t][0] = Board.NoPiece
+                    if self.turn == 'white':
+                        piecedict['K'].add('c1')
+                        piecedict['R'].remove('a1')
+                        piecedict['R'].add('f1')
+
+                    else:
+                        piecedict['K'].add('c8')
+                        piecedict['R'].remove('a8')
+                        piecedict['R'].add('f8')
+
+                    if self.turn == 'black':
+                        self.moves += 1
+                    self.update()
+                    self.movelist.append(move)
 
                 return
             else:
