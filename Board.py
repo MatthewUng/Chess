@@ -101,6 +101,33 @@ class Board:
         piecedict = self.pLocW if self.turn == 'white' else self.pLocB
         move = move.rstrip('+')
         move = move.replace('x','')
+       
+        if move == "O-O" or move == "O-O-O":
+            if self.validCastle(move):
+                t = 7 if self.turn == 'white' else 0
+                if move == "O-O":
+                    self.board[t][6] = self.board[t][4]
+                    self.board[t][4] = Board.NoPiece
+                    piecedict['K'].pop()
+                    piecedict['K'].add('g1')
+                    self.board[t][5] = self.board[t][7]
+                    self.board[t][7] = Board.NoPiece
+                    rookloc = 'h1' if t == 7 else 'h8'
+                    piecedict['R'].remove(rookloc)
+                    piecedict['R'].add('f1')
+
+                    if self.turn == 'black':
+                        self.moves += 1
+
+                    self.update()
+                    self.movelist.append(move)
+
+                elif move == "O-O-O":
+                    pass
+
+                return
+            else:
+                return False
         
         if not move[0].isupper():
             move = 'P'+move
@@ -112,11 +139,9 @@ class Board:
 
         if move[0] not in Board.pieces:
             return False
-       
 
         moves = filter(lambda x: self.validMove(piece, x, loc),\
           piecedict[piece])
-
 
         if len(moves) != 1:
             return False
@@ -138,10 +163,9 @@ class Board:
 
             self.update()
             self.movelist.append(move)
-        """
-        self.castleKW, self.castleKB = True, True
-        self.castleQW, self.castleQB = True, True
-        """
+    
+
+
     def validCastle(self, move):
         if self.turn == "white":
             #White Queenside Castle
@@ -311,6 +335,22 @@ class Board:
                     potential.remove(tup)
             return set(map(lambda tup: bta(tup[0],tup[1]),potential))
             
+        def pawnCheck(start,side):
+            """attack range of the pawn"""
+            x,y = atb(start)
+            t = -1 if side == 'white' else 1
+            potential = list()
+            for i in [-1,1]:
+                potential.append((x+t, y+i))
+
+            for tup in potential[:]:
+                if min(tup) < 0 or max(tup) > 7:
+                    potential.remove(tup)
+                elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
+                    potential.remove(tup)
+            return set(map(lambda tup: bta(tup[0],tup[1]),potential))
+            
+
         out = set()
         p = self.pLocW if side == "white" else self.pLocB
         
@@ -332,6 +372,9 @@ class Board:
                 if piece == 'K':
                     for loc in locSet:
                         out |= kingCheck(loc)
+                if piece == 'P':
+                    for loc in locSet:
+                        out |= pawnCheck(loc,side)
         return out
 
     def validMove(self, piece, start, end):
