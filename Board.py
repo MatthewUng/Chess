@@ -1,5 +1,4 @@
 #TODO: IMPLEMENT EN PASSANT
-#TODO: IMPLEMENT attackRange()
 class Board:
     pieces = ['P','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
@@ -11,6 +10,11 @@ class Board:
         self.pLocW = dict()
         self.pLocB = dict()
         self.movelist = list()
+        self.castleKW, self.castleKB = True, True
+        self.castleQW, self.castleQB = True, True
+        self.moves = 1
+        self.turn = 'white'
+        self.halfmoves = 0
         self.newGame()
 
     def reset(self):
@@ -84,7 +88,9 @@ class Board:
         #setting ep variables
         for i in range(0,len(spacesplit[3]),2):
             self.ep.append(spacesplit[3][i:i+2])
-        
+        if self.ep[0] == '-':
+            self.ep.remove('-')
+       
         self.halfmoves = int(spacesplit[4])
         self.moves = int(spacesplit[5])
 
@@ -517,12 +523,59 @@ class Board:
 
     def __repr__(self):
         out = list()
+        #adding self.board
         for line in self.board:
             for square in line:
                 out.append(str(square))
-            out.append('\n')
-        return ''.join(out)
-            
+        b = '\n' + ("{:<15} " * 8 + '\n') * 8 
+        out = b.format(*out) 
+
+        #adding pieceloc dict
+        out += '\n\nWhite piece loc Dict: \n'
+        for piece, loc in self.pLocW.items():
+            out += "{} : {}\n".format(piece,loc)
+
+        out += '\nBlack piece loc Dict: \n'
+        for piece, loc in self.pLocB.items():
+            out += "{} : {}\n".format(piece, loc)
+        
+        #adding ep list
+        out += "\nEP list: \n"
+        out += str(self.ep) + '\n'
+
+        #adding castling rights
+        out += "\nWhite can still castle: "
+        if self.castleKW == True: 
+            out += "Kingside "
+        if self.castleQW == True:
+            out += "Queenside"
+        out += '\n'
+        out += "Black can still castle: "
+        if self.castleKB == True:
+            out += "Kingside "
+        if self.castleQB == True:
+            out += "Queenside"
+        out += '\n\n'
+
+        #adding moves
+        out += "There has been {} moves:\n".format(self.moves)
+        if len(self.movelist) % 2 == 0:
+            if len(self.movelist) == 0:
+                pass
+            else:
+                for i in range((self.moves)/2):
+                    out += "{}. {} {}\n".format(i+1, \
+                      self.movelist[2*i],self.movelist[1+2*i])
+        else:
+            for i in range((self.moves-1)/2):
+                out += "{}. {} {}\n".format(i+1, \
+                  self.movelist[2*i],self.movelist[1+2*i])
+            out += "{}. {}\n".format(self.moves, self.movelist[-1])
+
+        out += "\nThere have been {} halfmoves made.\n".format(self.halfmoves)+\
+          "It is currently {} to move.\n".format(self.turn)
+        return '\n\n' + str(self) + out+'\n'     
+
     def __str__(self):
         out = list()
         for line in self.board:
