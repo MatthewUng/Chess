@@ -118,16 +118,21 @@ class Board:
                     piecedict['K'].pop()
                     self.board[t][5] = self.board[t][7]
                     self.board[t][7] = Board.NoPiece
-                    if self.turn == white:
+                    if self.turn == 'white':
                         piecedict['K'].add('g1')
                         piecedict['R'].remove('h1')
                         piecedict['R'].add('f1')
+                        self.castleKW = False
+                        self.castleQW = False
                     else:
                         piecedict['K'].add('g8')
                         piecedict['R'].remove('h8')
                         piecedict['R'].add('f8')
+                        self.castleKB = False
+                        self.castleQB = False
 
                     self.update()
+
                     self.movelist.append(move)
 
                 elif move == "O-O-O":
@@ -140,11 +145,15 @@ class Board:
                         piecedict['K'].add('c1')
                         piecedict['R'].remove('a1')
                         piecedict['R'].add('f1')
+                        self.castleKW = False
+                        self.castleQW = False
 
                     else:
                         piecedict['K'].add('c8')
                         piecedict['R'].remove('a8')
                         piecedict['R'].add('f8')
+                        self.castleKB = False
+                        self.castleQB = False
 
                     self.update()
                     self.movelist.append(move)
@@ -181,17 +190,37 @@ class Board:
             self.board[X][Y] = Board.NoPiece
             piecedict[piece].remove(moves[0])
             piecedict[piece] |= set([loc])
-
-
+            if self.turn == 'white': 
+                if piece == 'R':
+                    if moves[0] == 'a1':
+                        self.castleQW = False
+                    elif moves[0] == 'h1':
+                        self.castleKW = False
+                elif piece == 'K':
+                    if moves [0] == 'e1':
+                        self.castleQW = False
+                        self.castleKW = False
+            elif self.turn == 'black':
+                if piece == 'R':
+                    if moves[0] == 'a8':
+                        self.castleQB = False
+                    elif moves[0] == 'h8':
+                        self.castleKB = False
+                if piece == 'K':
+                    if moves[0] == 'e8':
+                        self.castleQB = False
+                        self.castleKB = False
+            
+                
             self.update()
             self.movelist.append(move)
     
-
 
     def validCastle(self, move):
         if self.turn == "white":
             #White Queenside Castle
             if move == "O-O-O":
+
                 if self.castleQW == False:
                     return False
                 for index in [1,2,3]:
@@ -215,10 +244,12 @@ class Board:
                 return True           
                     
         elif self.turn == "black":
+            print 'in here2'
           
             #Black Queenside Castle
             if move == "O-O-O":
                 if self.castleQB == False:
+                    print 'fail here'
                     return False
                 for index in [1,2,3]:
                     if self.board[0][index][1] != "None":
@@ -230,7 +261,7 @@ class Board:
 
             #Black Kingside Castle
             elif move == "O-O":
-                if self.castleBW == False:
+                if self.castleKB == False:
                     return False
                 for index in [5,6]:
                     if self.board[0][index][1] != "None":
@@ -417,7 +448,7 @@ class Board:
                   
             #same logic as above
             elif y == Y:
-                for i in range(min(x,X), max(x,X)):
+                for i in range(min(x,X)+1, max(x,X)):
                     if self.board[i][y][1] != 'None':
                         return False
                 return True
@@ -486,7 +517,7 @@ class Board:
             opp = 'white' if self.turn == 'black' else 'black'
 
             #pawn moves forward one
-            if x == t + X and y == Y and self.board[X][Y] == Board.NoPiece:
+            if x + t == X and y == Y and self.board[X][Y] == Board.NoPiece:
                 return True
 
             #taking pieces
@@ -555,21 +586,19 @@ class Board:
 
         #adding moves
 
-        print self.moves
-
         out += "There has been {} moves:\n".format(self.moves)
         if len(self.movelist) % 2 == 0:
             if len(self.movelist) == 0:
                 pass
             else:
                 for i in range((self.moves)/2):
-                    out += "{}. {} {}\n".format(i+1, \
+                    out += "{}. {:<5} {:<5}\n".format(i+1, \
                       self.movelist[2*i],self.movelist[1+2*i])
         else:
             for i in range((self.moves-1)/2):
-                out += "{}. {} {}\n".format(i+1, \
+                out += "{}. {:<5} {:<5}\n".format(i+1, \
                   self.movelist[2*i],self.movelist[1+2*i])
-            out += "{}. {}\n".format(self.moves, self.movelist[-1])
+            out += "{}. {:<5}\n".format(self.moves/2+1, self.movelist[-1])
 
         out += "\nThere have been {} halfmoves made.\n".format(self.halfmoves)+\
           "It is currently {} to move.\n".format(self.turn)
