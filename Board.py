@@ -1,4 +1,5 @@
 #TODO: IMPLEMENT EN PASSANT
+#TODO: IMPLEMENT CHECK/CHECKMATE
 class Board:
     pieces = ['P','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
@@ -12,7 +13,7 @@ class Board:
         self.movelist = list()
         self.castleKW, self.castleKB = True, True
         self.castleQW, self.castleQB = True, True
-        self.moves = 1
+        self.moves = 0
         self.turn = 'white'
         self.halfmoves = 0
         self.newGame()
@@ -33,7 +34,7 @@ class Board:
         self.reset()
         self.castleKW, self.castleKB = True, True
         self.castleQW, self.castleQB = True, True
-        self.moves = 1
+        self.moves = 0
         self.turn = 'white'
         self.halfmoves = 0
         # 1, 2, ... , len(pieces) - 1
@@ -99,7 +100,7 @@ class Board:
             self.turn = "black"
         else:
             self.turn = "white"
-            self.moves += 1
+        self.moves += 1
 
     def move(self, move):
         """makes a certain move"""
@@ -126,8 +127,6 @@ class Board:
                         piecedict['R'].remove('h8')
                         piecedict['R'].add('f8')
 
-                    if self.turn == 'black':
-                        self.moves += 1
                     self.update()
                     self.movelist.append(move)
 
@@ -147,8 +146,6 @@ class Board:
                         piecedict['R'].remove('a8')
                         piecedict['R'].add('f8')
 
-                    if self.turn == 'black':
-                        self.moves += 1
                     self.update()
                     self.movelist.append(move)
 
@@ -185,8 +182,6 @@ class Board:
             piecedict[piece].remove(moves[0])
             piecedict[piece] |= set([loc])
 
-            if self.turn == 'black':
-                self.moves += 1
 
             self.update()
             self.movelist.append(move)
@@ -557,7 +552,11 @@ class Board:
             out += "Queenside"
         out += '\n\n'
 
+
         #adding moves
+
+        print self.moves
+
         out += "There has been {} moves:\n".format(self.moves)
         if len(self.movelist) % 2 == 0:
             if len(self.movelist) == 0:
