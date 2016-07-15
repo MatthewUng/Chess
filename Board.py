@@ -1,6 +1,7 @@
-#TODO: IMPLEMENT EN PASSANT
 #TODO: IMPLEMENT ERRORS 
+#TODO: IMPLEMENT PROMOTION
 #TODO: IMPLEMENT CHECK/CHECKMATE
+#TODO: IMPLEMENT PINS/KING RESTRICTIONS
 class Board:
     pieces = ['P','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
@@ -94,7 +95,7 @@ class Board:
             self.ep.remove('-')
        
         self.halfmoves = int(spacesplit[4])
-        self.moves = int(spacesplit[5])
+        self.moves = int(spacesplit[5]) - 1
 
     def update(self):
         if self.turn == "white":
@@ -169,7 +170,7 @@ class Board:
         #1st     char should designate piece
         piece = move[0]
         #last two char should be end loc
-        loc = move[-2:]
+        loc = move[1:3]
 
         if move[0] not in Board.pieces:
             return False
@@ -198,6 +199,22 @@ class Board:
 
             #ep case
             if piece == 'P':
+                #promotion
+                if x == 0 or x == 7:
+                    if move[-1] in Board.pieces and\
+                    move[-1] != 'P':
+                        ppiece = move[-1]
+                        self.board[x][y] = (ppiece,self.turn)
+                    else:
+                        ppiece = raw_input('Pick a piece to promote to: ')
+                        while ppiece not in Board.pieces or\
+                        ppiece == 'P':
+                            ppiece = raw_input('Pick a piece to promote to: ')
+                        self.board[x][y] = (ppiece, self.turn)
+                        move += ppiece
+                    piecedict['P'].remove(loc)
+                    piecedict[ppiece].add(loc)
+
                 #adding to ep list
                 start = 6 if self.turn == 'white' else 1
                 t = -2 if self.turn == 'white' else 2
