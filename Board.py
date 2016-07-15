@@ -1,4 +1,5 @@
 #TODO: IMPLEMENT EN PASSANT
+#TODO: IMPLEMENT ERRORS 
 #TODO: IMPLEMENT CHECK/CHECKMATE
 class Board:
     pieces = ['P','R','N','B','Q','K']
@@ -177,6 +178,7 @@ class Board:
           piecedict[piece])
 
         if len(moves) != 1:
+            print "not valid move"
             return False
 
         #move valid
@@ -190,6 +192,27 @@ class Board:
             self.board[X][Y] = Board.NoPiece
             piecedict[piece].remove(moves[0])
             piecedict[piece] |= set([loc])
+
+            if loc not in self.ep:
+                del self.ep[:]
+
+            #ep case
+            if piece == 'P':
+                #adding to ep list
+                start = 6 if self.turn == 'white' else 1
+                t = -2 if self.turn == 'white' else 2
+                if abs(x-X) == 2 and X == start:
+                    self.ep.append(bta(X+t/2,y))
+                #removing pawn from board
+                elif loc in self.ep:
+                    t = 1 if self.turn == 'white' else -1
+                    self.board[x+t][y] = Board.NoPiece
+                    oppdict = self.pLocB if self.turn == 'white'\
+                      else self.pLocW
+                    oppdict['P'].remove(bta(x+t,y))
+                    del self.ep[:]
+                   
+            #setting castling variables
             if self.turn == 'white': 
                 if piece == 'R':
                     if moves[0] == 'a1':
@@ -244,12 +267,10 @@ class Board:
                 return True           
                     
         elif self.turn == "black":
-            print 'in here2'
           
             #Black Queenside Castle
             if move == "O-O-O":
                 if self.castleQB == False:
-                    print 'fail here'
                     return False
                 for index in [1,2,3]:
                     if self.board[0][index][1] != "None":
@@ -432,7 +453,6 @@ class Board:
 
     def validMove(self, piece, start, end):
         """determines if a move is valid"""
-        
         #lower -> start
         #upper -> end
         x,y = atb(start)
@@ -532,8 +552,8 @@ class Board:
                 return True
 
             #ep
-            elif True:
-                pass
+            elif end in self.ep and x + t == X and abs(y-Y) == 1:
+                return True
             else:
                 return False
 
