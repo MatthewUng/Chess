@@ -1,5 +1,4 @@
 #TODO: IMPLEMENT ERRORS 
-#TODO: IMPLEMENT PROMOTION
 #TODO: IMPLEMENT CHECK/CHECKMATE
 #TODO: IMPLEMENT PINS/KING RESTRICTIONS
 class Board:
@@ -308,6 +307,174 @@ class Board:
                     if square in self.attackRange('white'):
                         return False
                 return True           
+    
+    def getMoves(self, side):
+        d = self.pLocW if side == 'white' else self.pLocB
+        def fileCheck(start):
+            """possible moves of file pieces"""
+            x,y = atb(start)
+            out = set()
+            for i in range(1,8-y):
+                if self.board[x][y+i][1] != 'None':
+                    if self.board[x][y+i][1] != side:
+                        out |= set([bta(x,y+i)])
+                    break
+                else:
+                    out |= set([bta(x,y+i)])
+
+            for i in range(1,y+1):
+                if self.board[x][y-i][1] != 'None':
+                    if self.board[x][y-i][1] != side:
+                        out |= set([bta(x,y-i)])
+                    break
+                else:
+                    out |= set([bta(x,y-i)])
+
+            for i in range(1,8-x):
+                if self.board[x+i][y][1] != 'None':
+                    if self.board[x+i][y][1] != side:
+                        out |= set([bta(x+i,y)])
+                    break
+                else:
+                    out |= set([bta(x+i,y)])
+
+            for i in range(1,x+1):
+                if self.board[x-i][y][1] != 'None':
+                    if self.board[x-i][y][1] != side:
+                        out |= set([bta(x-i,y)])
+                    break
+                else:
+                    out |= set([bta(x-i,y)])
+            return out
+        
+        def diagCheck(start):
+            """possible moves with the Bishop"""
+            x,y = atb(start)
+            out = set()
+
+            #upper right diag
+            
+            for i in range(1, min(x+1, 8-y)):
+                if self.board[x-i][y+i][1] != 'None':
+                    if self.board[x-i][y+i][1] != side:
+                        out |= set([bta(x-i,y+i)])
+                    break
+                else:
+                    out |= set([bta(x-i,y+i)])
+
+            #upper left diag 
+            for i in range(1, min(x+1, y+1)):
+                if self.board[x-i][y-i][1] != 'None':
+                    if self.board[x-i][y-i][1] != side:
+                        out |= set([bta(x-i,y-i)])
+                    break
+                else:
+                    out |= set([bta(x-i,y-i)])
+
+            #lower right diag
+            for i in range(1, min(8-x, 8-y)):
+                if self.board[x+i][y+i][1] != 'None':
+                    if self.board[x+i][y+i][1] != side:
+                        out |= set([bta(x+i,y+i)])
+                    break
+                else:
+                    out |= set([bta(x+i,y+i)])
+
+            #lower left diag
+            for i in range(1, min(8-x, y+1)):
+                if self.board[x+i][y-i][1] != 'None':
+                    if self.board[x+i][y-i][1] != side:
+                        out |= set([bta(x+i,y-i)])
+                    break
+                else:
+                    out |= set([bta(x+i,y-i)])
+            return out
+
+        def knightCheck(start):
+            """possible moves with the knight"""
+            x,y = atb(start)
+            potential = list()
+            for i in [1,-1]:
+                for j in [-2,2]:
+                    potential.append((x+i,y+j))
+            for i in [-2,2]:
+                for j in [-1,1]:
+                    potential.append((x+i,y+j))
+            for tup in potential[:]:
+                if min(tup) < 0 or max(tup) > 7:
+                    potential.remove(tup)
+                elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
+                    potential.remove(tup)
+            return set(map(lambda tup: bta(tup[0],tup[1]), potential))
+
+        def kingCheck(start):
+            """possible moves with the king"""
+            x,y = atb(start)
+            potential = list()
+            for i in [-1,0,1]:
+                for j in [-1,0,1]:
+                    if i == j and j == 0:
+                        continue
+                    else:
+                        potential.append((x+i,y+j))  
+            for tup in potential[:]:
+                if min(tup) < 0 or max(tup) > 7:
+                    potential.remove(tup)
+                elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
+                    potential.remove(tup)
+            return set(map(lambda tup: bta(tup[0],tup[1]),potential))
+            
+        def pawnCheck(start):
+            """possible moves with pawn"""
+            out = list()
+            x,y = atb(start)
+            t = -1 if side == 'white' else 1
+            start = 6 if side == 'white' else 1
+            opp = 'black' if side == 'white' else 'white'
+
+            if self.board[x+t][y] == Board.NoPiece:
+                out.append(bta(x+t,y))
+                if x == start and self.board[x+2*t][y] == Board.NoPiece:
+                    out.append(bta(x+2*t,y))
+            for Y in [-1, 1]:
+                if min(x+t, y+Y) >=0 and max(x+t,y+Y) <=7:
+                    if self.board[x+t][y+Y][1] == opp:
+                        out.append(bta(x+t,y+Y))
+            return out
+
+        #start of function
+        out = list()
+        for piece, loc in d.items():
+            if piece == 'R' or piece == 'Q':
+                for l in loc:
+                    for end in fileCheck(l):
+                        out.append(piece+end)
+            if piece == 'B' or piece == 'Q':
+                for l in loc:
+                    for end in diagCheck(l):
+                        out.append(piece+end)
+            elif piece == 'N':
+                for l in loc:
+                    for end in knightCheck(l):
+                        out.append(piece+end)
+            elif piece == 'K':
+                for l in loc:
+                    for end in kingCheck(l):
+                        out.append(piece+end)
+            elif piece == 'P':
+                for l in loc:
+                    for end in pawnCheck(l):
+                        out.append(piece+end)
+        return out
+
+    def checkCheck(self, side):
+        """checks if the side is in check or not"""
+        opp = 'black' if side == 'white' else 'white'
+        d = self.pLocW if side == 'white' else self.pLocB
+        if list(d['K'])[0] in self.attackRange(opp):
+            return True
+        else: 
+            return False
            
     def attackRange(self, side):
         """determines the squares that a certain side is attacking"""
@@ -538,7 +705,9 @@ class Board:
         #King
         elif piece == 'K':
             if abs(x-X) <= 1 and abs(y-Y) <= 1:
-                return True
+                opp = 'black' if self.board[x][y][1] == 'white' else 'white'
+                if end not in self.attackRange(opp):
+                    return True
             else:
                 return False
 
@@ -574,7 +743,30 @@ class Board:
             else:
                 return False
 
-
+    def mateCheck(self, side):
+        """determines if the side is checkmated or not"""
+        def kingCheck(start):
+            """attack range of the king"""
+            x,y = atb(start)
+            potential = list()
+            for i in [-1,0,1]:
+                for j in [-1,0,1]:
+                    if i == j and j == 0:
+                        continue
+                    else:
+                        potential.append((x+i,y+j))  
+            for tup in potential[:]:
+                if min(tup) < 0 or max(tup) > 7:
+                    potential.remove(tup)
+                elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
+                    potential.remove(tup)
+            return set(map(lambda tup: bta(tup[0],tup[1]),potential))
+        piecedict = self.pLocW if self.turn == 'white' else self.pLocB
+        opp = 'black' if self.turn == 'white' else 'white'
+        if kingCheck(piecedict[K].copy().pop()) in attackRange(opp):
+            return True
+        else:
+            return False
 
     def __getitem__(self, key):
         x,y = list(key)
