@@ -448,26 +448,26 @@ class Board:
             if piece == 'R' or piece == 'Q':
                 for l in loc:
                     for end in fileCheck(l):
-                        out.append(piece+end)
+                        out.append((piece, l, end))
             if piece == 'B' or piece == 'Q':
                 for l in loc:
                     for end in diagCheck(l):
-                        out.append(piece+end)
+                        out.append((piece, l, end))
             elif piece == 'N':
                 for l in loc:
                     for end in knightCheck(l):
-                        out.append(piece+end)
+                        out.append((piece, l, end))
             elif piece == 'K':
                 for l in loc:
                     for end in kingCheck(l):
-                        out.append(piece+end)
+                        out.append((piece, l, end))
             elif piece == 'P':
                 for l in loc:
                     for end in pawnCheck(l):
-                        out.append(piece+end)
+                        out.append((piece, l, end))
         return out
 
-    def checkCheck(self, side):
+   def checkCheck(self, side):
         """checks if the side is in check or not"""
         opp = 'black' if side == 'white' else 'white'
         d = self.pLocW if side == 'white' else self.pLocB
@@ -744,29 +744,53 @@ class Board:
                 return False
 
     def mateCheck(self, side):
-        """determines if the side is checkmated or not"""
-        def kingCheck(start):
-            """attack range of the king"""
+        def moveCheck(piece, start, end):
             x,y = atb(start)
-            potential = list()
-            for i in [-1,0,1]:
-                for j in [-1,0,1]:
-                    if i == j and j == 0:
-                        continue
-                    else:
-                        potential.append((x+i,y+j))  
-            for tup in potential[:]:
-                if min(tup) < 0 or max(tup) > 7:
-                    potential.remove(tup)
-                elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
-                    potential.remove(tup)
-            return set(map(lambda tup: bta(tup[0],tup[1]),potential))
-        piecedict = self.pLocW if self.turn == 'white' else self.pLocB
-        opp = 'black' if self.turn == 'white' else 'white'
-        if kingCheck(piecedict[K].copy().pop()) in attackRange(opp):
-            return True
+            X,Y = atb(end)
+            out = False
+
+            #setting variables
+            opp = 'black' if side == 'white' else 'white'
+            d = self.pLocB if opp == 'white' else self.pLocW
+            oppd = self.pLocW if side == 'white' else self.pLocB
+            old = self.board[X][Y]
+            
+            #altering board
+            self.board[X][Y] = self.board[x][y]
+            self.board[x][y] = Board.NoPiece
+            
+            
+            if old != Board.NoPiece:
+                oppd[old[0]].remove(end)
+            d[piece].remove(start)
+            d[piece].add(end)
+           
+            #check if king still in check 
+            if list(d['K'])[0] in attackRange(opp):
+                out = True
+            
+            #putting board back together
+            self.board[x][y] = self.board[X][Y]
+            self.board[X][Y] = old
+
+            if old != Board.NoPiece:
+                oppd[old[0]].add(end)
+            d[piece].add(start)
+            d[piece].remove(end)
+
+            return out 
+            
+
+        if self.checkCheck(side):
+            for move in self.getMoves(side):
+                if self.mateCheck(side):
+                    return True
+
+            return False
         else:
             return False
+
+
 
     def __getitem__(self, key):
         x,y = list(key)
