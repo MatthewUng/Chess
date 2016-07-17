@@ -1,13 +1,15 @@
 import Board
 
 b = Board.Board()
-for move in b.getMoves('white'):
-    print move
-print len(b.getMoves('white'))
-print ''
-for move in b.getMoves('black'):
-    print move
-print len(b.getMoves('black'))
+
+
+b.move('f4')
+b.move('e5')
+b.move('g4')
+b.move('Qh4')
+
+print "checkCheck: " + str(b.checkCheck('white'))
+print "mateCheck: " + str(b.mateCheck('white'))
 
 """b.setUp('8/P7/8/3K4/5k2/8/5p2/8 w - - 0 1')
 
@@ -21,4 +23,3 @@ b.move('Bc4')
 """
 
 #print b.__repr__
-

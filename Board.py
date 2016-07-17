@@ -1,11 +1,18 @@
 #TODO: IMPLEMENT ERRORS 
 #TODO: IMPLEMENT CHECK/CHECKMATE
 #TODO: IMPLEMENT PINS/KING RESTRICTIONS
+
+import re
+import ChessExceptions
+
 class Board:
     pieces = ['P','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
                ['c','f'],['d'],['e']]
     NoPiece = (' ','None')
+    stPattern = re.compile('([PRBNQK]{1})([a-h]{1}[1-8]{1})')
+    resPattern = re.compile(
+    '([PRBNQK]{1})([a-f]{,1}[1-8]{,1})([a-f]{1}[1-8]{1})')
 
     def __init__(self):
         self.ep = list()
@@ -102,13 +109,31 @@ class Board:
         else:
             self.turn = "white"
         self.moves += 1
+    
+    def parseMove(self, Input):
+        """Checks semantics of move input"""
+        move = Input.replace('x','')
+        move = move.rstrip('+')
+        if move[0].islower():
+            move = 'P'+move
+        if len(move) == 3:
+            m = re.match(Board.stPattern, move)
+            if m == None:
+                return False
+            return (m.group(1), m.group(2), '')
+        elif len(move) > 3:
+            m = re.match(Board.resPattern, move)
+            if m == None:
+                return False
+            return (m.group(1), m.group(3), m.group(2))
+        else:
+            return False
+
 
     def move(self, move):
         """makes a certain move"""
 
         piecedict = self.pLocW if self.turn == 'white' else self.pLocB
-        move = move.rstrip('+')
-        move = move.replace('x','')
        
         if move == "O-O" or move == "O-O-O":
             if self.validCastle(move):
@@ -159,41 +184,49 @@ class Board:
                     self.update()
                     self.movelist.append(move)
 
-                return
+                return True
             else:
-                return False
-        
-        if not move[0].isupper():
-            move = 'P'+move
+                raise ChessExceptions.ChessException
 
-        #1st     char should designate piece
-        piece = move[0]
-        #last two char should be end loc
-        loc = move[1:3]
+        #move is normal
+        else:
+            move = self.parseMove(move)
 
-        if move[0] not in Board.pieces:
-            return False
+            #error
+            if not move:
+                raise ChessExceptions.InvalidMoveException(move)
 
-        moves = filter(lambda x: self.validMove(piece, x, loc),\
+            #move is fine
+            piece = move[0]
+            end = move[1]
+            r = move[2]
+
+        possPieces = piecedict[piece]
+
+        if r:
+            possPieces = filter(lambda x: x in r, possPieces)
+            if len(possPieces) == 0:
+                raise ChessExceptions.InvalidMoveException(move)
+
+        moves = filter(lambda x: self.validMove(piece, x, end),\
           piecedict[piece])
 
         if len(moves) != 1:
-            print "not valid move"
-            return False
+            raise ChessExceptions.AmbiguousMoveException(move)
 
         #move valid
         #make move
         else:
-            #loc is location to move to
+            #end is location to move to
             #moves[0] is the starting loc
-            x,y = atb(loc)
+            x,y = atb(end)
             X,Y = atb(moves[0])
             self.board[x][y] = (piece, self.turn)
             self.board[X][Y] = Board.NoPiece
             piecedict[piece].remove(moves[0])
-            piecedict[piece] |= set([loc])
+            piecedict[piece].add(end) 
 
-            if loc not in self.ep:
+            if end not in self.ep:
                 del self.ep[:]
 
             #ep case
@@ -211,8 +244,8 @@ class Board:
                             ppiece = raw_input('Pick a piece to promote to: ')
                         self.board[x][y] = (ppiece, self.turn)
                         move += ppiece
-                    piecedict['P'].remove(loc)
-                    piecedict[ppiece].add(loc)
+                    piecedict['P'].remove(end)
+                    piecedict[ppiece].add(end)
 
                 #adding to ep list
                 start = 6 if self.turn == 'white' else 1
@@ -220,7 +253,7 @@ class Board:
                 if abs(x-X) == 2 and X == start:
                     self.ep.append(bta(X+t/2,y))
                 #removing pawn from board
-                elif loc in self.ep:
+                elif end in self.ep:
                     t = 1 if self.turn == 'white' else -1
                     self.board[x+t][y] = Board.NoPiece
                     oppdict = self.pLocB if self.turn == 'white'\
@@ -253,7 +286,6 @@ class Board:
                 
             self.update()
             self.movelist.append(move)
-    
 
     def validCastle(self, move):
         if self.turn == "white":
@@ -467,7 +499,7 @@ class Board:
                         out.append((piece, l, end))
         return out
 
-   def checkCheck(self, side):
+    def checkCheck(self, side):
         """checks if the side is in check or not"""
         opp = 'black' if side == 'white' else 'white'
         d = self.pLocW if side == 'white' else self.pLocB
@@ -752,7 +784,7 @@ class Board:
             #setting variables
             opp = 'black' if side == 'white' else 'white'
             d = self.pLocB if opp == 'white' else self.pLocW
-            oppd = self.pLocW if side == 'white' else self.pLocB
+            oppd = self.pLocW if opp == 'white' else self.pLocB
             old = self.board[X][Y]
             
             #altering board
@@ -766,7 +798,7 @@ class Board:
             d[piece].add(end)
            
             #check if king still in check 
-            if list(d['K'])[0] in attackRange(opp):
+            if list(d['K'])[0] in self.attackRange(opp):
                 out = True
             
             #putting board back together
@@ -783,13 +815,14 @@ class Board:
 
         if self.checkCheck(side):
             for move in self.getMoves(side):
-                if self.mateCheck(side):
-                    return True
+                if not moveCheck(move[0],move[1],move[2]):
+                    #if move does not induce check
+                    #it is not checkmate
+                    return False
 
-            return False
+            return True
         else:
             return False
-
 
 
     def __getitem__(self, key):
