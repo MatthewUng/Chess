@@ -1,5 +1,3 @@
-#TODO: IMPLEMENT ERRORS 
-#TODO: IMPLEMENT CHECK/CHECKMATE
 #TODO: IMPLEMENT PINS/KING RESTRICTIONS
 
 import re
@@ -12,7 +10,7 @@ class Board:
     NoPiece = (' ','None')
     stPattern = re.compile('([PRBNQK]{1})([a-h]{1}[1-8]{1})')
     resPattern = re.compile(
-    '([PRBNQK]{1})([a-f]{,1}[1-8]{,1})([a-f]{1}[1-8]{1})')
+    '([PRBNQK]{1})([a-h]{,1}[1-8]{,1})([a-h]{1}[1-8]{1})')
 
     def __init__(self):
         self.ep = list()
@@ -134,7 +132,9 @@ class Board:
         """makes a certain move"""
 
         piecedict = self.pLocW if self.turn == 'white' else self.pLocB
-       
+        oppdict = self.pLocB  if self.turn == 'white' else self.pLocW
+        opp = 'white' if self.turn == 'black' else 'black'
+
         if move == "O-O" or move == "O-O-O":
             if self.validCastle(move):
                 t = 7 if self.turn == 'white' else 0
@@ -190,6 +190,8 @@ class Board:
 
         #move is normal
         else:
+            if move == 'hxg4':
+                print self.parseMove(move)
             move = self.parseMove(move)
 
             #error
@@ -202,17 +204,23 @@ class Board:
             r = move[2]
 
         possPieces = piecedict[piece]
-
+        
         if r:
-            possPieces = filter(lambda x: x in r, possPieces)
+            possPieces = filter(lambda x: r in x, possPieces)
+
             if len(possPieces) == 0:
                 raise ChessExceptions.InvalidMoveException(move)
 
         moves = filter(lambda x: self.validMove(piece, x, end),\
-          piecedict[piece])
+          possPieces)
 
         if len(moves) != 1:
+
             raise ChessExceptions.AmbiguousMoveException(move)
+        
+        if self.moveCheck(piece, moves[0],end, self.turn):
+            #move puts king under check
+            raise ChessExceptions.InvalidMoveException(move)
 
         #move valid
         #make move
@@ -221,10 +229,16 @@ class Board:
             #moves[0] is the starting loc
             x,y = atb(end)
             X,Y = atb(moves[0])
+            #if piece is taken
+            #need to remove it from dict
+            if self.board[x][y][1] == opp:
+                oppdict[self.board[x][y][0]].remove(end)
             self.board[x][y] = (piece, self.turn)
             self.board[X][Y] = Board.NoPiece
             piecedict[piece].remove(moves[0])
             piecedict[piece].add(end) 
+
+            
 
             if end not in self.ep:
                 del self.ep[:]
@@ -287,8 +301,9 @@ class Board:
             self.update()
             self.movelist.append(move)
 
-    def validCastle(self, move):
-        if self.turn == "white":
+    def validCastle(self, move, side):
+        """determines if castling is valid"""
+        if side == "white":
             #White Queenside Castle
             if move == "O-O-O":
 
@@ -314,7 +329,7 @@ class Board:
                         return False
                 return True           
                     
-        elif self.turn == "black":
+        elif side == "black":
           
             #Black Queenside Castle
             if move == "O-O-O":
@@ -339,7 +354,15 @@ class Board:
                     if square in self.attackRange('white'):
                         return False
                 return True           
-    
+
+    def getCastling(self, side):
+        """returns possible castling moves"""
+        out = list()
+        for i in ['O-O', 'O-O-O']:
+            if validCastle(i, side):
+                out.append(i)
+        return i 
+
     def getMoves(self, side):
         d = self.pLocW if side == 'white' else self.pLocB
         def fileCheck(start):
@@ -668,7 +691,7 @@ class Board:
         return out
 
     def validMove(self, piece, start, end):
-        """determines if a move is valid"""
+        """determines if a move is valid for that piece"""
         #lower -> start
         #upper -> end
         x,y = atb(start)
@@ -759,7 +782,7 @@ class Board:
                 return True
 
             #taking pieces
-            elif x == t + X and abs(y-Y) == 1 and self.board[X][Y][1] == opp:
+            elif x+t == X and abs(y-Y) == 1 and self.board[X][Y][1] == opp:
                 return True
             
             #moving two steps forward
@@ -775,51 +798,55 @@ class Board:
             else:
                 return False
 
+    def moveCheck(self, piece, start, end,side):
+        """checks if a move doesn't put the king under check"""
+        x,y = atb(start)
+        X,Y = atb(end)
+        out = False
+
+        #setting variables
+        opp = 'black' if side == 'white' else 'white'
+        d = self.pLocB if opp == 'white' else self.pLocW
+        oppd = self.pLocW if opp == 'white' else self.pLocB
+        old = self.board[X][Y]
+        
+        #altering board
+        self.board[X][Y] = self.board[x][y]
+        self.board[x][y] = Board.NoPiece
+        
+        
+        if old != Board.NoPiece:
+            oppd[old[0]].remove(end)
+        d[piece].remove(start)
+        d[piece].add(end)
+       
+        #check if king still in check 
+        if list(d['K'])[0] in self.attackRange(opp):
+            out = True
+        
+        #putting board back together
+        self.board[x][y] = self.board[X][Y]
+        self.board[X][Y] = old
+
+        if old != Board.NoPiece:
+            oppd[old[0]].add(end)
+        d[piece].add(start)
+        d[piece].remove(end)
+
+        return out 
+
     def mateCheck(self, side):
-        def moveCheck(piece, start, end):
-            x,y = atb(start)
-            X,Y = atb(end)
-            out = False
-
-            #setting variables
-            opp = 'black' if side == 'white' else 'white'
-            d = self.pLocB if opp == 'white' else self.pLocW
-            oppd = self.pLocW if opp == 'white' else self.pLocB
-            old = self.board[X][Y]
-            
-            #altering board
-            self.board[X][Y] = self.board[x][y]
-            self.board[x][y] = Board.NoPiece
-            
-            
-            if old != Board.NoPiece:
-                oppd[old[0]].remove(end)
-            d[piece].remove(start)
-            d[piece].add(end)
-           
-            #check if king still in check 
-            if list(d['K'])[0] in self.attackRange(opp):
-                out = True
-            
-            #putting board back together
-            self.board[x][y] = self.board[X][Y]
-            self.board[X][Y] = old
-
-            if old != Board.NoPiece:
-                oppd[old[0]].add(end)
-            d[piece].add(start)
-            d[piece].remove(end)
-
-            return out 
-            
 
         if self.checkCheck(side):
             for move in self.getMoves(side):
-                if not moveCheck(move[0],move[1],move[2]):
+                if not self.moveCheck(move[0],move[1],move[2]):
                     #if move does not induce check
                     #it is not checkmate
                     return False
-
+            #if there is a valid castling move, 
+            #it is not checkmate
+            for move in self.getCastling(side):
+                return False 
             return True
         else:
             return False

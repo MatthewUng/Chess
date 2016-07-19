@@ -1,26 +1,22 @@
 import Board
 import Game
 
-#b = Board.Board()
-g = Game.Game()
-print g.b
+b = Board.Board()
 
-"""
-b.move('f4')
-b.move('e5')
-b.move('g4')
-b.move('Qh4')
+f = open('sampleGame.txt')
+for _ in range(32):
+    try:
+        line = f.readline()
+        l = line.split()
+        b.move(l[1])
+        b.move(l[2])
+    except:
+#        print b.__repr__
+        print l[0], l[1], l[2]
+        print 'exception occurred'
+        exit(1)
 
-"""
-"""b.setUp('8/P7/8/3K4/5k2/8/5p2/8 w - - 0 1')
+print b.__repr__
+print l[0], l[1], l[2]
+exit(1)
 
-b.move('a8Q')
-b.move('f1Q')
-b.move('e4')
-b.move('e5')
-b.move('Nf3')
-b.move('Nc6')
-b.move('Bc4')
-"""
-
-#print b.__repr__
