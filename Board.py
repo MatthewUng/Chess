@@ -136,7 +136,7 @@ class Board:
         opp = 'white' if self.turn == 'black' else 'black'
 
         if move == "O-O" or move == "O-O-O":
-            if self.validCastle(move):
+            if self.validCastle(move, self.turn):
                 t = 7 if self.turn == 'white' else 0
                 if move == "O-O":
                     self.board[t][6] = self.board[t][4]
@@ -190,8 +190,6 @@ class Board:
 
         #move is normal
         else:
-            if move == 'hxg4':
-                print self.parseMove(move)
             move = self.parseMove(move)
 
             #error
@@ -297,7 +295,10 @@ class Board:
                         self.castleQB = False
                         self.castleKB = False
             
-                
+            #if game is over
+            if self.mateCheck(opp):
+                raise ChessExceptions.checkMateException(self.turn)
+
             self.update()
             self.movelist.append(move)
 
@@ -354,14 +355,15 @@ class Board:
                     if square in self.attackRange('white'):
                         return False
                 return True           
+        return False
 
     def getCastling(self, side):
         """returns possible castling moves"""
         out = list()
         for i in ['O-O', 'O-O-O']:
-            if validCastle(i, side):
+            if self.validCastle(i, side):
                 out.append(i)
-        return i 
+        return out 
 
     def getMoves(self, side):
         d = self.pLocW if side == 'white' else self.pLocB
@@ -798,7 +800,7 @@ class Board:
             else:
                 return False
 
-    def moveCheck(self, piece, start, end,side):
+    def moveCheck(self, piece, start, end, side):
         """checks if a move doesn't put the king under check"""
         x,y = atb(start)
         X,Y = atb(end)
@@ -836,13 +838,15 @@ class Board:
         return out 
 
     def mateCheck(self, side):
-
+        """determines if a certain side is checkmated"""
         if self.checkCheck(side):
             for move in self.getMoves(side):
-                if not self.moveCheck(move[0],move[1],move[2]):
+                if not self.moveCheck(move[0],move[1],move[2],side):
                     #if move does not induce check
                     #it is not checkmate
                     return False
+
+
             #if there is a valid castling move, 
             #it is not checkmate
             for move in self.getCastling(side):

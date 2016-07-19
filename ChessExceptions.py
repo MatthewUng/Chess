@@ -1,4 +1,3 @@
-
 class ChessException(Exception):
     def __init__(self):
         pass
@@ -21,4 +20,11 @@ class AmbiguousMoveException(ChessException):
     def __str__(self):
         return "Ambigous Move: " + self.string
 
+class checkMateException(ChessException):
+    def __init__(self, winner):
+        self.winner = winner
+
+
+    def __str__(self):
+        return "The Winner is: " + self.winner
 

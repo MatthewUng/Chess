@@ -1,22 +1,17 @@
 import Board
 import Game
+import re
 
+#pattern = re.compile(r'[\d]+\.\s(.+?)\s(.+?)\s')
 b = Board.Board()
 
-f = open('sampleGame.txt')
-for _ in range(32):
-    try:
-        line = f.readline()
-        l = line.split()
-        b.move(l[1])
-        b.move(l[2])
-    except:
-#        print b.__repr__
-        print l[0], l[1], l[2]
-        print 'exception occurred'
-        exit(1)
+b.move('f4')
+b.move('e5')
+b.move('g4')
+b.move('Qh4')
+
+print b.checkCheck('white')
+print 'middle'
+print b.mateCheck('white')
 
 print b.__repr__
-print l[0], l[1], l[2]
-exit(1)
-
