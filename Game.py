@@ -12,8 +12,7 @@ class Game:
         self.b.move(move)
     
     
-
-if __name__ == "__main__":
+def main():
     g = Game()
     try:
         while True:
@@ -24,3 +23,7 @@ if __name__ == "__main__":
 
     except Exception as e:
         print e
+
+if __name__ == "__main__":
+    main()
+
