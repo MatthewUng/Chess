@@ -10,11 +10,14 @@ class piece:
         path = os.path.join(os.path.dirname(__file__), \
             piece.rpath, color+p+'.png')
 
+        self.canvas = canvas
         self.color = color
         self.photo = ImageTk.PhotoImage(file=path)
-        canvas.create_image(x, y, image=self.photo)
+        self.piece = canvas.create_image(x, y, image=self.photo)
 
-
+    def move(self, dx, dy):
+        self.canvas.move(self.piece, dx, dy)
+        
 
 def createBoard(canvas, side):
     for x in range(8):
@@ -32,14 +35,18 @@ def setUp(canvas,side):
     s = ss/2
 
 if __name__ == '__main__':
-    side = 68 * 8 
+    square = 68
+    offset = square / 2
+    side = square * 8 
     root = Tk()
     w = Canvas(root, width=side, height=side)
     w.pack()
     
-    p = piece(w, 0,0,'R','white')
 
     createBoard(w,side)
+    p = piece(w, offset, offset,'R','white')
+    p.move(square, square)
+
     setUp(w,side)
 
 
