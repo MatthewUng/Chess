@@ -1,4 +1,3 @@
-#TODO: IMPLEMENT PINS/KING RESTRICTIONS
 
 import re
 import ChessExceptions
