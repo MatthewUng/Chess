@@ -1,5 +1,5 @@
 import os
-from Tkinter import *
+import Tkinter as tk
 from PIL import ImageTk, Image
 import sys
 import Board
@@ -21,17 +21,18 @@ class Piece:
     def move(self, dx, dy):
         self.canvas.move(self.piece, dx, dy)
         
+    def moveTo(self, x, y):
+        self.canvas.move
 
-
-class BoardUI:
+class BoardUI(tk.Tk):
 
     def __init__(self, square):
-        self. pieces = [[None for _ in range(8)] for _ in range(8)]
+        tk.Tk.__init__(self)
+        self.pieces = [[None for _ in range(8)] for _ in range(8)]
         self.side = 8 * square
         self.offset = square / 2
         self.square = square
-        self.root = Tk()
-        self.canvas = Canvas(self.root, width=self.side, height=self.side)
+        self.canvas = tk.Canvas(self, width=self.side, height=self.side)
         self.canvas.pack()
         for x in range(8):
             for y in range(8):
@@ -49,8 +50,40 @@ class BoardUI:
                     yPixel = self.offset + x*self.square
                     self.pieces[x][y] = Piece(self.canvas, xPixel, yPixel, \
                         d[x][y][0], d[x][y][1])
+    
+    def move(movetup):
+        #movetup = ('O-O'/'O-O-O', 'white'/'black')
+        # or 
+        #movetup = (piece, start, end, taken)
+        if movetup[0] == 'O-O' or movetup[0] == 'O-O-O':
+
+        else:
+            startx, starty = atu(movetup[1])
+            endx, endy = atu(movetup[2])
+            p = self.pieces[startx][starty]
+            p.moveTo(endx, endy)
+            if movetup[3] != False:
+                #remove piece here
+                pass
+
+
+
+    #not sure this is needed
     def run(self):
-        mainloop()
+        tk.mainloop()
+
+def btu(x,y):
+    #board coord to ui coord
+    return (y,x)
+
+def utb(x,y):
+    #ui coord to board coord
+    return (y,x)
+
+def atu(move):
+    #algebraic notation to ui coord
+    x = Board.atb(move)
+    return bta(x[0], x[1])
 
 if __name__ == '__main__':
     #side is side of small square 

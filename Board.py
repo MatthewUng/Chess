@@ -133,6 +133,7 @@ class Board:
         piecedict = self.pLocW if self.turn == 'white' else self.pLocB
         oppdict = self.pLocB  if self.turn == 'white' else self.pLocW
         opp = 'white' if self.turn == 'black' else 'black'
+        taken = False
 
         if move == "O-O" or move == "O-O-O":
             if self.validCastle(move, self.turn):
@@ -183,7 +184,7 @@ class Board:
                     self.update()
                     self.movelist.append(move)
 
-                return True
+                return (move, self.turn)
             else:
                 raise ChessExceptions.ChessException
 
@@ -300,6 +301,7 @@ class Board:
 
             self.update()
             self.movelist.append(move)
+            return (piece, moves[0], end, taken)
 
     def validCastle(self, move, side):
         """determines if castling is valid"""
