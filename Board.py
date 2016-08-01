@@ -856,6 +856,8 @@ class Board:
         else:
             return False
 
+    def getD(self):
+        return self.board
 
     def __getitem__(self, key):
         x,y = list(key)
