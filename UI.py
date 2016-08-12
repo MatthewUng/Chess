@@ -24,11 +24,14 @@ class Piece:
         self.canvas.move(self.piece, dx, dy)
         self.coord = (self.coord[0]+dx, self.coord[1]+dy)
         
-    def moveTo(self, x, y, side):
+    def moveTo(self, x, y, square):
         #x, y are UI coord
-        xpixel = y*side
-        ypixel = x*side
-        self.move(xpixel-self.coord[0]+side/2, ypixel-self.coord[1]+side/2)
+        xpixel = y*square
+        ypixel = x*square
+        self.move(xpixel-self.coord[0]+square/2, ypixel-self.coord[1]+square/2)
+    
+    def __del__(self):
+            self.canvas.delete(self.piece)
 
     def __repr__(self):
         return self.color + ' ' +self.p+' @ '+str(self.coord)
@@ -54,6 +57,7 @@ class BoardUI(tk.Tk):
                     x*square+square,y*square+square, fill=c)
 
     def setUp(self, d):
+        self.pieces = [[None for _ in range(8)] for _ in range(8)]
         for x in range(8):
             for y in range(8):
                 if d[x][y][1] == 'None':
@@ -68,28 +72,53 @@ class BoardUI(tk.Tk):
         self.f.update()
 
     def move(self, movetup):
+        print self.pieces
         #movetup = ('O-O'/'O-O-O', 'white'/'black')
         # or 
         #movetup = (piece, start, end, taken)
-        if movetup[0] == 'O-O' or movetup[0] == 'O-O-O':
-            pass
+        if movetup[0] == 'O-O': 
+            if movetup[1] == 'white':
+                temp = 7
+            else:
+                temp = 0
+
+            #self.pieces takes board coords
+            self.pieces[temp][4].moveTo(temp,6,self.square)
+            self.pieces[temp][7].moveTo(temp,5,self.square)
+            self.pieces[temp][6] = self.pieces[temp][4]
+            self.pieces[temp][7] = self.pieces[temp][5]
+            self.pieces[temp][4] = None
+            self.pieces[temp][5] = None
+
+        elif movetup[0] == 'O-O-O':
+            if movetup[1] == 'white':
+                temp = 7
+            else:
+                temp = 0
+
+            self.pieces[temp][4].moveTo(temp,2,self.square)
+            self.pieces[temp][0].moveTo(temp,3,self.square)
+            self.pieces[temp][3] = self.pieces[temp][0]
+            self.pieces[temp][2] = self.pieces[temp][4]
+            self.pieces[temp][0] = None
+            self.pieces[temp][4] = None
+
         else:
             startx, starty = Board.atb(movetup[1])
             endx, endy = Board.atb(movetup[2])
             
-            print self.pieces
-            print startx, starty
-            print endx, endy
             p = self.pieces[startx][starty]
 
             uicoordx, uicoordy = btu(endx, endy)
             p.moveTo(endx, endy, self.square)
+            
+            self.pieces[endx][endy] = self.pieces[startx][starty]
+            self.pieces[startx][starty] = None
 
             if movetup[3] != False:
-                #remove piece here
-                pass
-
-            print p.coord
+                x,y = atu(movetup[3])
+                del self.pieces[x][y]
+            
 
 
 

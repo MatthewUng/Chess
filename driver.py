@@ -14,11 +14,11 @@ class driver():
         print 'after get'
 
         name = self.driver.find_element_by_name('username')
-        name.clear()
+        #name.clear()
         name.send_keys(self.usr)
         
         passwd = self.driver.find_element_by_name('password')
-        passwd.clear()
+        #passwd.clear()
         password = getpass.getpass()
         passwd.send_keys(password)
         passwd.send_keys(Keys.RETURN)

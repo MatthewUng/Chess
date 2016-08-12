@@ -157,7 +157,6 @@ class Board:
                         self.castleKB = False
                         self.castleQB = False
 
-                    self.update()
 
                     self.movelist.append(move)
 
@@ -181,10 +180,11 @@ class Board:
                         self.castleKB = False
                         self.castleQB = False
 
-                    self.update()
                     self.movelist.append(move)
-
-                return (move, self.turn)
+                
+                temp = self.turn
+                self.update()
+                return (move, temp)
             else:
                 raise ChessExceptions.ChessException
 

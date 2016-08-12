@@ -27,7 +27,6 @@ def main():
             print "It is {} to move.".format(g.b.turn)
             move = raw_input("Input a move: ")
             g.move(move)             
-            print 'after g.move()'
             g.update()
 
     except Exception as e:
