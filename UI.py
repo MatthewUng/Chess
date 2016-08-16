@@ -86,9 +86,9 @@ class BoardUI(tk.Tk):
             self.pieces[temp][4].moveTo(temp,6,self.square)
             self.pieces[temp][7].moveTo(temp,5,self.square)
             self.pieces[temp][6] = self.pieces[temp][4]
-            self.pieces[temp][7] = self.pieces[temp][5]
+            self.pieces[temp][5] = self.pieces[temp][7]
             self.pieces[temp][4] = None
-            self.pieces[temp][5] = None
+            self.pieces[temp][7] = None
 
         elif movetup[0] == 'O-O-O':
             if movetup[1] == 'white':
@@ -107,6 +107,10 @@ class BoardUI(tk.Tk):
             startx, starty = Board.atb(movetup[1])
             endx, endy = Board.atb(movetup[2])
             
+            #if taking a piece, remove it from the board
+            if self.pieces[endx][endy] != None:
+                del self.pieces[endx][endy]
+
             p = self.pieces[startx][starty]
 
             uicoordx, uicoordy = btu(endx, endy)
@@ -114,7 +118,9 @@ class BoardUI(tk.Tk):
             
             self.pieces[endx][endy] = self.pieces[startx][starty]
             self.pieces[startx][starty] = None
-
+            
+            #if taken != false
+            #i.e. en. passant
             if movetup[3] != False:
                 x,y = atu(movetup[3])
                 del self.pieces[x][y]

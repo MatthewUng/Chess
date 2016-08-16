@@ -213,8 +213,7 @@ class Board:
           possPieces)
 
         if len(moves) != 1:
-
-            raise ChessExceptions.AmbiguousMoveException(move)
+            raise ChessExceptions.AmbiguousMoveException(move[0]+move[1])
         
         if self.moveCheck(piece, moves[0],end, self.turn):
             #move puts king under check
