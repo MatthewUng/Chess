@@ -1,15 +1,17 @@
 
 import re
-import ChessExceptions
+from ChessExceptions import *
 
 class Board:
+    digits = range(1,9)
+    letters = map(chr, range(97, 105))
     pieces = ['P','R','N','B','Q','K']
     initLoc = [['a','h',],['b','g'],\
                ['c','f'],['d'],['e']]
     NoPiece = (' ','None')
-    stPattern = re.compile('([PRBNQK]{1})([a-h]{1}[1-8]{1})')
+    stPattern = re.compile('([PRBNQK]{1})([a-h]{1}[1-8]{1})(RKBQK)?')
     resPattern = re.compile(
-    '([PRBNQK]{1})([a-h]{,1}[1-8]{,1})([a-h]{1}[1-8]{1})')
+    '([PRBNQK]{1})([a-h]?[1-8]?)([a-h]{1}[1-8]{1})([RBNQK]?)')
 
     def __init__(self):
         self.ep = list()
@@ -113,18 +115,19 @@ class Board:
         move = move.rstrip('+')
         if move[0].islower():
             move = 'P'+move
-        if len(move) == 3:
-            m = re.match(Board.stPattern, move)
-            if m == None:
-                return False
-            return (m.group(1), m.group(2), '')
-        elif len(move) > 3:
-            m = re.match(Board.resPattern, move)
-            if m == None:
-                return False
-            return (m.group(1), m.group(3), m.group(2))
-        else:
+
+        if len(move) < 3:
             return False
+
+        m = re.match(Board.resPattern, move)
+        
+        if m == None:
+            return False
+        elif m.group(1) != 'P' and m.group(4) != '':
+            return False
+        #(piec, end, restrict, promopiece)
+        print (m.group(1), m.group(3), m.group(2), m.group(4))
+        return (m.group(1), m.group(3), m.group(2), m.group(4))
 
 
     def move(self, move):
@@ -186,15 +189,17 @@ class Board:
                 self.update()
                 return (move, temp)
             else:
-                raise ChessExceptions.ChessException
+                raise ChessException
 
         #move is normal
         else:
+            #move = (piece, end, restrict, promo)
+            print move
             move = self.parseMove(move)
 
             #error
             if not move:
-                raise ChessExceptions.InvalidMoveException(move)
+                raise InvalidMoveException(move)
 
             #move is fine
             piece = move[0]
@@ -207,17 +212,17 @@ class Board:
             possPieces = filter(lambda x: r in x, possPieces)
 
             if len(possPieces) == 0:
-                raise ChessExceptions.InvalidMoveException(move)
+                raise InvalidMoveException(move)
 
         moves = filter(lambda x: self.validMove(piece, x, end),\
           possPieces)
 
-        if len(moves) != 1:
-            raise ChessExceptions.AmbiguousMoveException(move[0]+move[1])
+        if len(moves) > 1:
+            raise AmbiguousMoveException(move[0]+move[1])
         
-        if self.moveCheck(piece, moves[0],end, self.turn):
+        if len(moves) == 0 or self.moveCheck(piece, moves[0],end, self.turn):
             #move puts king under check
-            raise ChessExceptions.InvalidMoveException(move)
+            raise InvalidMoveException(move)
 
         #move valid
         #make move
@@ -236,7 +241,6 @@ class Board:
             piecedict[piece].add(end) 
 
             
-
             if end not in self.ep:
                 del self.ep[:]
 
@@ -244,17 +248,18 @@ class Board:
             if piece == 'P':
                 #promotion
                 if x == 0 or x == 7:
-                    if move[-1] in Board.pieces and\
-                    move[-1] != 'P':
-                        ppiece = move[-1]
+                    if move[3]:
+                        ppiece = move[3]
                         self.board[x][y] = (ppiece,self.turn)
                     else:
                         ppiece = raw_input('Pick a piece to promote to: ')
                         while ppiece not in Board.pieces or\
                         ppiece == 'P':
+                            print ppiece+' is not valid.'
                             ppiece = raw_input('Pick a piece to promote to: ')
                         self.board[x][y] = (ppiece, self.turn)
-                        move += ppiece
+                        move = (move[0], move[1], move[2], ppiece)
+
                     piecedict['P'].remove(end)
                     piecedict[ppiece].add(end)
 
@@ -296,7 +301,7 @@ class Board:
             
             #if game is over
             if self.mateCheck(opp):
-                raise ChessExceptions.checkMateException(self.turn)
+                raise checkMateException(self.turn)
 
             self.update()
             self.movelist.append(move)
@@ -854,6 +859,9 @@ class Board:
             return True
         else:
             return False
+    
+    def promote(self, x, y, piece):
+        self.board[x][y] = (piece, self.board[x][y][1])   
 
     def getD(self):
         return self.board
@@ -911,13 +919,13 @@ class Board:
                 pass
             else:
                 for i in range((self.moves)/2):
-                    out += "{}. {:<5} {:<5}\n".format(i+1, \
+                    out += "{}. {:<20} {:<20}\n".format(i+1, \
                       self.movelist[2*i],self.movelist[1+2*i])
         else:
             for i in range((self.moves-1)/2):
-                out += "{}. {:<5} {:<5}\n".format(i+1, \
+                out += "{}. {:<20} {:<20}\n".format(i+1, \
                   self.movelist[2*i],self.movelist[1+2*i])
-            out += "{}. {:<5}\n".format(self.moves/2+1, self.movelist[-1])
+            out += "{}. {:<20}\n".format(self.moves/2+1, self.movelist[-1])
 
         out += "\nThere have been {} halfmoves made.\n".format(self.halfmoves)+\
           "It is currently {} to move.\n".format(self.turn)
@@ -943,3 +951,21 @@ def bta(x,y):
     """board notation to algebraic notation"""
     return chr(97+y)+str(8-x)
 
+
+if __name__ == '__main__':
+    b = Board()
+    while True:
+        try:
+            print '\n'
+            print b
+            print "It is "+b.turn+" to move."
+            move = raw_input("Make a move: ")
+            b.move(move)
+
+        except InvalidMoveException:
+            print "\nThe move "+move+' is Invalid'
+            continue
+
+        except AmbiguousMoveException:
+            print "\nThe move "+move+" is Ambigusous"
+            continue
