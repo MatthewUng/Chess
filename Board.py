@@ -919,7 +919,7 @@ class Board:
                 pass
             else:
                 for i in range((self.moves)/2):
-                    out += "{}. {:<20} {:<20}\n".format(i+1, \
+                    out += "{}. {:<20} {:<20t}\n".format(i+1, \
                       self.movelist[2*i],self.movelist[1+2*i])
         else:
             for i in range((self.moves-1)/2):
