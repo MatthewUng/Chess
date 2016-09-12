@@ -13,17 +13,36 @@ class Board:
     resPattern = re.compile(
     '([PRBNQK]{1})([a-h]?[1-8]?)([a-h]{1}[1-8]{1})([RBNQK]?)')
 
-    def __init__(self):
-        self.ep = list()
-        self.pLocW = dict()
-        self.pLocB = dict()
-        self.movelist = list()
-        self.castleKW, self.castleKB = True, True
-        self.castleQW, self.castleQB = True, True
-        self.moves = 0
-        self.turn = 'white'
-        self.halfmoves = 0
-        self.newGame()
+    def __init__(self, copy = False):
+        if copy:
+            self.board = [x[:] for x in copy.board]
+            self.ep = copy.ep[:]
+            self.pLocW = dict()
+            self.pLocB = dict()
+            for key, value in copy.pLocW.items():
+                self.pLocW[key] = value.copy()
+            for key, value in copy.pLocB.items():
+                self.pLocB[key] = value.copy()
+            self.movelist = copy.movelist[:]
+            self.castleKW = copy.castleKW
+            self.castleKB = copy.castleKB
+            self.castleQW = copy.castleQW
+            self.castleQB = copy.castleQB
+            self.moves = copy.moves
+            self.turn = copy.turn
+            self.halfmoves = copy.halfmoves
+            
+        else:
+            self.ep = list()
+            self.pLocW = dict()
+            self.pLocB = dict()
+            self.movelist = list()
+            self.castleKW, self.castleKB = True, True
+            self.castleQW, self.castleQB = True, True
+            self.moves = 0
+            self.turn = 'white'
+            self.halfmoves = 0
+            self.newGame()
 
     def reset(self):
         """Resets the Board to blank"""
@@ -125,8 +144,7 @@ class Board:
             return False
         elif m.group(1) != 'P' and m.group(4) != '':
             return False
-        #(piec, end, restrict, promopiece)
-        print (m.group(1), m.group(3), m.group(2), m.group(4))
+        #(piece, end, restrict, promopiece)
         return (m.group(1), m.group(3), m.group(2), m.group(4))
 
 
@@ -194,7 +212,6 @@ class Board:
         #move is normal
         else:
             #move = (piece, end, restrict, promo)
-            print move
             move = self.parseMove(move)
 
             #error
@@ -255,7 +272,6 @@ class Board:
                         ppiece = raw_input('Pick a piece to promote to: ')
                         while ppiece not in Board.pieces or\
                         ppiece == 'P':
-                            print ppiece+' is not valid.'
                             ppiece = raw_input('Pick a piece to promote to: ')
                         self.board[x][y] = (ppiece, self.turn)
                         move = (move[0], move[1], move[2], ppiece)
@@ -371,6 +387,7 @@ class Board:
         return out 
 
     def getMoves(self, side):
+        """returns set of moves (piece, l, end)"""
         d = self.pLocW if side == 'white' else self.pLocB
         def fileCheck(start):
             """possible moves of file pieces"""
@@ -502,6 +519,8 @@ class Board:
                 if min(x+t, y+Y) >=0 and max(x+t,y+Y) <=7:
                     if self.board[x+t][y+Y][1] == opp:
                         out.append(bta(x+t,y+Y))
+                    elif False:
+                        pass
             return out
 
         #start of function
@@ -510,23 +529,31 @@ class Board:
             if piece == 'R' or piece == 'Q':
                 for l in loc:
                     for end in fileCheck(l):
-                        out.append((piece, l, end))
+                        out.append((piece, l, end, None))
             if piece == 'B' or piece == 'Q':
                 for l in loc:
                     for end in diagCheck(l):
-                        out.append((piece, l, end))
+                        out.append((piece, l, end, None))
             elif piece == 'N':
                 for l in loc:
                     for end in knightCheck(l):
-                        out.append((piece, l, end))
+                        out.append((piece, l, end, None))
             elif piece == 'K':
                 for l in loc:
                     for end in kingCheck(l):
-                        out.append((piece, l, end))
+                        out.append((piece, l, end, None))
             elif piece == 'P':
                 for l in loc:
                     for end in pawnCheck(l):
-                        out.append((piece, l, end))
+                        last = 8 if turn == 'white' else 1
+                        if end[1] == last:
+                            for promo in Board.pieces:
+                                if promo == 'P':
+                                    continue
+                                out.append((piece, l, end, promo))
+                        else:
+                            out.append((piece, l, end, None))
+
         return out
 
     def checkCheck(self, side):
@@ -742,7 +769,6 @@ class Board:
         
         #endcheck
         if self.board[x][y][1] == self.board[X][Y][1]:
-            print "end loc taken"
             return False
 
         #checking if values in range
@@ -860,6 +886,17 @@ class Board:
         else:
             return False
     
+    def implementMove(self, move):
+        """implements a moves and returns a new board object"""
+        #move = (piece, l, end, promo)
+        movestring = ''
+        for value in move:
+            if value:
+                movestring += value
+        out = Board(self)
+        out.move(movestring)
+        return out
+
     def promote(self, x, y, piece):
         self.board[x][y] = (piece, self.board[x][y][1])   
 
@@ -954,12 +991,17 @@ def bta(x,y):
 
 if __name__ == '__main__':
     b = Board()
+
     while True:
         try:
             print '\n'
             print b
             print "It is "+b.turn+" to move."
+            print "ctrl + c to quit"
             move = raw_input("Make a move: ")
+            if move == 'state':
+                print b.__repr__
+                continue
             b.move(move)
 
         except InvalidMoveException:
@@ -969,3 +1011,11 @@ if __name__ == '__main__':
         except AmbiguousMoveException:
             print "\nThe move "+move+" is Ambigusous"
             continue
+        
+        except checkMateException as e:
+            print e
+            exit(0)
+
+        except KeyboardInterrupt:
+            print "Thanks for playing"
+            sys.exit(0)

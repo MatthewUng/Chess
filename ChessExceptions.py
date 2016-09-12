@@ -26,5 +26,5 @@ class checkMateException(ChessException):
 
 
     def __str__(self):
-        return "The Winner is: " + self.winner
+        return "The Winner is " + self.winner
 
