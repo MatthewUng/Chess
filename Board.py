@@ -517,7 +517,8 @@ class Board:
                     out.append(bta(x+2*t,y))
             for Y in [-1, 1]:
                 if min(x+t, y+Y) >=0 and max(x+t,y+Y) <=7:
-                    if self.board[x+t][y+Y][1] == opp:
+                    if self.board[x+t][y+Y][1] == opp \
+                        or bta(x+t,y+Y) in self.ep:
                         out.append(bta(x+t,y+Y))
                     elif False:
                         pass
@@ -1009,7 +1010,7 @@ if __name__ == '__main__':
             continue
 
         except AmbiguousMoveException:
-            print "\nThe move "+move+" is Ambigusous"
+            print "\nThe move "+move+" is Ambiguous"
             continue
         
         except checkMateException as e:
