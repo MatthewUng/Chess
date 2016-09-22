@@ -231,6 +231,7 @@ class Board:
             if len(possPieces) == 0:
                 raise InvalidMoveException(move)
 
+
         moves = filter(lambda x: self.validMove(piece, x, end),\
           possPieces)
 
@@ -239,7 +240,10 @@ class Board:
         
         if len(moves) == 0 or self.moveCheck(piece, moves[0],end, self.turn):
             #move puts king under check
+            print self.__repr__
+            print 'move is:' +str(move)
             raise InvalidMoveException(move)
+            
 
         #move valid
         #make move
@@ -488,6 +492,8 @@ class Board:
 
         def kingCheck(start):
             """possible moves with the king"""
+            opp = 'black' if side == 'white' else 'white'
+            oppRange = self.attackRange(opp)
             x,y = atb(start)
             potential = list()
             for i in [-1,0,1]:
@@ -500,6 +506,8 @@ class Board:
                 if min(tup) < 0 or max(tup) > 7:
                     potential.remove(tup)
                 elif self.board[tup[0]][tup[1]][1] == self.board[x][y][1]:
+                    potential.remove(tup)
+                elif bta(tup[0],tup[1]) in oppRange:
                     potential.remove(tup)
             return set(map(lambda tup: bta(tup[0],tup[1]),potential))
             
@@ -525,35 +533,44 @@ class Board:
             return out
 
         #start of function
+    #def moveCheck(self, piece, start, end, side):
         out = list()
         for piece, loc in d.items():
             if piece == 'R' or piece == 'Q':
                 for l in loc:
                     for end in fileCheck(l):
-                        out.append((piece, l, end, None))
+                        if self.moveCheck(piece, l, end, self.turn):
+                            out.append((piece, l, end, None))
             if piece == 'B' or piece == 'Q':
                 for l in loc:
                     for end in diagCheck(l):
-                        out.append((piece, l, end, None))
+                        print piece, end, l, self.turn
+                        if self.moveCheck(piece, l, end, self.turn):
+                            out.append((piece, l, end, None))
             elif piece == 'N':
                 for l in loc:
                     for end in knightCheck(l):
-                        out.append((piece, l, end, None))
+                        if self.moveCheck(piece, l, end, self.turn):
+                            out.append((piece, l, end, None))
             elif piece == 'K':
                 for l in loc:
                     for end in kingCheck(l):
-                        out.append((piece, l, end, None))
+                        if self.moveCheck(piece, l, end, self.turn):
+                            out.append((piece, l, end, None))
             elif piece == 'P':
                 for l in loc:
                     for end in pawnCheck(l):
-                        last = 8 if turn == 'white' else 1
+                        if self.moveCheck(piece, l, end, self.turn):
+                            continue
+                        last = 8 if side == 'white' else 1
                         if end[1] == last:
                             for promo in Board.pieces:
                                 if promo == 'P':
                                     continue
                                 out.append((piece, l, end, promo))
                         else:
-                            out.append((piece, l, end, None))
+                            if self.validMove(piece, l,end):
+                                out.append((piece, l, end, None))
 
         return out
 
@@ -897,6 +914,9 @@ class Board:
         out = Board(self)
         out.move(movestring)
         return out
+
+    def lastMove(self):
+        return self.moves[-1]
 
     def promote(self, x, y, piece):
         self.board[x][y] = (piece, self.board[x][y][1])   

@@ -1,12 +1,17 @@
+from collections import deque
 import Board
 
 class Node:
-    def __init__(self,board):
+    def __init__(self,board, move = None):
         self.board = board
         self.turn = self.board.turn
         self.children = list()
         self.parent = None
         self.evaluation = None #(board object, evaluation)
+        if move == None:
+            self.moves = list()
+        else:
+            self.moves = move
 
     def parseLevel(self):
         posneg = 1 if self.turn == 'white' else -1
@@ -15,9 +20,11 @@ class Node:
 
     def implementChildren(self):
         """implement all the possible children for the node"""
-        for move in self.board.getMoves():
-            self.setChild(self.board.implementMove(move))
- 
+        for move in self.board.getMoves(self.turn):
+            temp = self.moves[:]
+            temp.append(move)
+            self.setChild(Node(self.board.implementMove(move), temp))
+            
     def reset(self):
         self.evaluation = None
         #propagate down
@@ -25,7 +32,7 @@ class Node:
             node.reset()
 
     def isLeaf(self):
-        if self.children:
+        if not self.children:
             return True
         else: return False
 
@@ -49,7 +56,15 @@ class Node:
 
     def getBoard(self):
         return self.board
-     
+    
+    def hasChildren(self):
+        return bool(self.children)
+
+    def findBest(self):
+        """self node is the root node"""
+        self.minimax(None, None)
+        return self.getEval()
+
     def minimax(self, alpha, beta):
         #function determines the value of self node
         #while iterating through the tree
@@ -84,6 +99,9 @@ class Node:
                     self.setEval((child, child.getEval())) 
                     beta = child.getEval()
 
+    def __repr__(self):
+        return "node: "+str(self.moves)
+
 class Tree:
 
     def __init__(self, board, turn):
@@ -115,17 +133,48 @@ class Tree:
         newDeep = set()
         for node in self.deepest:
             node.implementChildren()
-
-            newDeep |= set(node.getChildren)
+            print node.getChildren()
+            newDeep |= set(node.getChildren())
+        self.deepest = newDeep
         self.depth += 1
         
     def minimax(self, n):
         if n > self.depth:
-            self.implementlevel()
+            self.implementLevel()
+        print self.deepest
         self.reset()
-        out = self.root.minimax(None, None)
+        out = self.root.findBest()
         return out
 
+    def __repr__(self):
+        out = ''
+        queue = deque()
+        queue.append(self.root)
+        nextRow = list()
+
+        while queue:
+            Next = queue.popleft()   
+            out += str(Next)
+            if Next == '\n':
+                queue.append(nextRow)
+                nextRow.clear()
+
+            elif type(Next) == list:
+                out += ''
+
+            elif Next.hasChildren():
+                nextRow.append(Next.getChildren())
+
+            if not queue and nextRow:
+                queue.append('\n')
+        return out
+
+    def test(self):
+        print 'zeroth: '+str(self.deepest)
+        self.implementLevel()
+        print 'first: ' +str(self.deepest)
+        self.implementLevel()
+        print 'second: '+str(self.deepest)
 
 class Bot:
     value = {'P':1,
@@ -134,6 +183,12 @@ class Bot:
              'R':5,
              'Q':9}
 
+value = {'P':1,
+         'N':3,
+         'B':3,
+         'R':5,
+         'Q':9,
+         'K':0}
 
 def evaluate(board):
     """board is board object"""
@@ -147,20 +202,22 @@ def analyzeMate(board):
         if board.turn == 'white':
             return 1000
         else: return -1000
+    return 0.0
 
 def analyzeRange(board):
     return len(board.attackRange(board.turn))* .02
 
 def analyzeMaterial(board):
+    board=board.getD()
     white = 0
     black = 0
     for x in range(8):
         for y in range(8):
             if board[x][y][1] == 'white':
                 white += value[board[x][y][0]]
-            else:
+            elif board[x][y][1] == 'black':
                 black += value[board[x][y][0]]
-    return white - black
+    return float(white - black)
 
 if __name__ == '__main__':
     f = open('matein3.txt','r')
@@ -168,7 +225,18 @@ if __name__ == '__main__':
     b = Board.Board()
     b.setUp(fen)
     print b
+
     t = Tree(b, b.turn) 
+    t.test()
+    exit()
+
+
     print t.minimax(3)
+    print '\n\n'
+    print t.root
+    print t.root.children[0]
+    print t.root.children[0].children[0]
+    exit()
+    print t
 
 

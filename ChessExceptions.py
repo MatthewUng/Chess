@@ -11,20 +11,19 @@ class InvalidMoveException(ChessException):
         self.string = string
 
     def __str__(self):
-        return "Invalid Move: " + self.string
+        return "Invalid Move: " + str(self.string)
         
 class AmbiguousMoveException(ChessException):
     def __init__(self, string):
         self.string = string
 
     def __str__(self):
-        return "Ambigous Move: " + self.string
+        return "Ambigous Move: " + str(self.string)
 
 class checkMateException(ChessException):
     def __init__(self, winner):
         self.winner = winner
 
-
     def __str__(self):
-        return "The Winner is " + self.winner
+        return "The Winner is " + str(self.winner)
 
