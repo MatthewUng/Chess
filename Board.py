@@ -23,6 +23,7 @@ class Board:
                 self.pLocW[key] = value.copy()
             for key, value in copy.pLocB.items():
                 self.pLocB[key] = value.copy()
+            self.done = copy.done
             self.movelist = copy.movelist[:]
             self.castleKW = copy.castleKW
             self.castleKB = copy.castleKB
@@ -36,6 +37,9 @@ class Board:
             self.ep = list()
             self.pLocW = dict()
             self.pLocB = dict()
+            self.done = False
+
+            #(piece, end, restrict, promopiece)
             self.movelist = list()
             self.castleKW, self.castleKB = True, True
             self.castleQW, self.castleQB = True, True
@@ -240,8 +244,6 @@ class Board:
         
         if len(moves) == 0 or self.moveCheck(piece, moves[0],end, self.turn):
             #move puts king under check
-            print repr(self)
-            print moves, self.moveCheck(piece, moves[0], end, self.turn)
     #def moveCheck(self, piece, start, end, side):
             raise InvalidMoveException(move)
             
@@ -275,6 +277,8 @@ class Board:
                         self.board[x][y] = (ppiece,self.turn)
                     else:
                         ppiece = raw_input('Pick a piece to promote to: ')
+                        if ppiece == 'print':
+                            print repr(self)
                         while ppiece not in Board.pieces or\
                         ppiece == 'P':
                             ppiece = raw_input('Pick a piece to promote to: ')
@@ -322,11 +326,15 @@ class Board:
             
             #if game is over
             if self.mateCheck(opp):
+                self.done = True
+                self.update()
+                self.movelist.append(move)
                 raise CheckMateException(self.turn)
 
             self.update()
             self.movelist.append(move)
             return (piece, moves[0], end, taken)
+
 
     def validCastle(self, move, side):
         """determines if castling is valid"""
@@ -536,34 +544,38 @@ class Board:
     #def moveCheck(self, piece, start, end, side):
         d = self.pLocW if side == 'white' else self.pLocB
         out = list()
+
+        if self.done:
+            return out
+
         for piece, loc in d.items():
             if piece == 'R' or piece == 'Q':
-                for l in loc:
+                for l in set(loc):
                     for end in fileCheck(l):
                         if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             if piece == 'B' or piece == 'Q':
-                for l in loc:
+                for l in set(loc):
                     for end in diagCheck(l):
                         if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             elif piece == 'N':
-                for l in loc:
+                for l in set(loc):
                     for end in knightCheck(l):
                         if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             elif piece == 'K':
-                for l in loc:
+               for l in set(loc):
                     for end in kingCheck(l):
                         if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             elif piece == 'P':
-                for l in loc:
+                for l in set(loc):
                     for end in pawnCheck(l):
                         if self.moveCheck(piece, l, end, side):
                             continue
                         last = 8 if side == 'white' else 1
-                        if end[1] == last:
+                        if end[1] == str(last):
                             for promo in Board.pieces:
                                 if promo == 'P':
                                     continue
@@ -919,6 +931,29 @@ class Board:
             pass
         return out
 
+    def forceMove(self, move):
+        #move = (piece, l, end, promo)
+        #ASSUMES THE MOVE IS VALID
+        piece, l, end, promo = move
+        x,y = atb(l)
+        X,Y = atb(end)
+        side = self.board[x][y][1]
+        d = self.pLocW if side == 'white' else self.pLocB
+        oppd = self.pLocB if side == 'white' else self.pLocW
+        old = self.board[X][Y]
+
+        if old[1] != 'None':
+            oppd[old[0]].remove(end)
+        self.board[X][Y] = self.board[x][y]
+        self.board[x][y] = Board.NoPiece
+        
+        d[piece].remove(l)
+        d[piece].add(end)
+        #(piece, end, restrict, promopiece)
+        self.movelist.append((piece,end,l,promo))
+        self.update()
+        self.done = True
+
     def lastMove(self):
         return self.moves[-1]
 
@@ -981,7 +1016,7 @@ class Board:
                 pass
             else:
                 for i in range((self.moves)/2):
-                    out += "{}. {:<20} {:<20t}\n".format(i+1, \
+                    out += "{}. {:<20} {:<20}\n".format(i+1, \
                       self.movelist[2*i],self.movelist[1+2*i])
         else:
             for i in range((self.moves-1)/2):
@@ -1014,23 +1049,20 @@ def bta(x,y):
 
 
 def test():
-    f=open('matein3.txt','r')
+    f = open('matein3.txt','r')
     fen = f.read()
     b = Board()
     b.setUp(fen)
-
-    b.move('Bc4')
-
-    for move in b.getMoves('black'):
-        print move
-
-    print repr(b)
+    b.move('Qxb8')
+    #('p','d2','e1','R')
+    b.forceMove(('P','e1','d2','R'))
     exit()
 
 if __name__ == '__main__':
+    test()
+
     b = Board()
 
-    test()
 
     while True:
         try:
@@ -1053,6 +1085,7 @@ if __name__ == '__main__':
             continue
         
         except CheckMateException as e:
+            print '\n',b
             print e
             exit(0)
 
