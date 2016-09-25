@@ -240,8 +240,9 @@ class Board:
         
         if len(moves) == 0 or self.moveCheck(piece, moves[0],end, self.turn):
             #move puts king under check
-            print self.__repr__
-            print 'move is:' +str(move)
+            print repr(self)
+            print moves, self.moveCheck(piece, moves[0], end, self.turn)
+    #def moveCheck(self, piece, start, end, side):
             raise InvalidMoveException(move)
             
 
@@ -321,7 +322,7 @@ class Board:
             
             #if game is over
             if self.mateCheck(opp):
-                raise checkMateException(self.turn)
+                raise CheckMateException(self.turn)
 
             self.update()
             self.movelist.append(move)
@@ -391,8 +392,7 @@ class Board:
         return out 
 
     def getMoves(self, side):
-        """returns set of moves (piece, l, end)"""
-        d = self.pLocW if side == 'white' else self.pLocB
+        """returns set of moves (piece, l, end, promo)"""
         def fileCheck(start):
             """possible moves of file pieces"""
             x,y = atb(start)
@@ -532,35 +532,35 @@ class Board:
                         pass
             return out
 
-        #start of function
+        #start of getMoves function
     #def moveCheck(self, piece, start, end, side):
+        d = self.pLocW if side == 'white' else self.pLocB
         out = list()
         for piece, loc in d.items():
             if piece == 'R' or piece == 'Q':
                 for l in loc:
                     for end in fileCheck(l):
-                        if self.moveCheck(piece, l, end, self.turn):
+                        if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             if piece == 'B' or piece == 'Q':
                 for l in loc:
                     for end in diagCheck(l):
-                        print piece, end, l, self.turn
-                        if self.moveCheck(piece, l, end, self.turn):
+                        if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             elif piece == 'N':
                 for l in loc:
                     for end in knightCheck(l):
-                        if self.moveCheck(piece, l, end, self.turn):
+                        if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             elif piece == 'K':
                 for l in loc:
                     for end in kingCheck(l):
-                        if self.moveCheck(piece, l, end, self.turn):
+                        if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
             elif piece == 'P':
                 for l in loc:
                     for end in pawnCheck(l):
-                        if self.moveCheck(piece, l, end, self.turn):
+                        if self.moveCheck(piece, l, end, side):
                             continue
                         last = 8 if side == 'white' else 1
                         if end[1] == last:
@@ -715,7 +715,6 @@ class Board:
                     potential.remove(tup)
             return set(map(lambda tup: bta(tup[0],tup[1]),potential))
             
-
         out = set()
         p = self.pLocW if side == "white" else self.pLocB
         
@@ -850,7 +849,8 @@ class Board:
                 return False
 
     def moveCheck(self, piece, start, end, side):
-        """checks if a move doesn't put the king under check"""
+        """checks if a move doesn't put the king under check
+           returns true if the move puts the king under check"""
         x,y = atb(start)
         X,Y = atb(end)
         out = False
@@ -890,6 +890,7 @@ class Board:
         """determines if a certain side is checkmated"""
         if self.checkCheck(side):
             for move in self.getMoves(side):
+                #piece l end promo
                 if not self.moveCheck(move[0],move[1],move[2],side):
                     #if move does not induce check
                     #it is not checkmate
@@ -912,7 +913,10 @@ class Board:
             if value:
                 movestring += value
         out = Board(self)
-        out.move(movestring)
+        try:
+            out.move(movestring)
+        except CheckMateException:
+            pass
         return out
 
     def lastMove(self):
@@ -998,7 +1002,6 @@ class Board:
         return ''.join(out)
     
 
-
         
 def atb(alg):
     """algebraic notation to board notation"""
@@ -1010,8 +1013,24 @@ def bta(x,y):
     return chr(97+y)+str(8-x)
 
 
+def test():
+    f=open('matein3.txt','r')
+    fen = f.read()
+    b = Board()
+    b.setUp(fen)
+
+    b.move('Bc4')
+
+    for move in b.getMoves('black'):
+        print move
+
+    print repr(b)
+    exit()
+
 if __name__ == '__main__':
     b = Board()
+
+    test()
 
     while True:
         try:
@@ -1033,7 +1052,7 @@ if __name__ == '__main__':
             print "\nThe move "+move+" is Ambiguous"
             continue
         
-        except checkMateException as e:
+        except CheckMateException as e:
             print e
             exit(0)
 

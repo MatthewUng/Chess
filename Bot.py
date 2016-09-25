@@ -21,9 +21,11 @@ class Node:
     def implementChildren(self):
         """implement all the possible children for the node"""
         for move in self.board.getMoves(self.turn):
+            print move
             temp = self.moves[:]
             temp.append(move)
             self.setChild(Node(self.board.implementMove(move), temp))
+        print 'done implementingchildren'
             
     def reset(self):
         self.evaluation = None
@@ -133,8 +135,9 @@ class Tree:
         newDeep = set()
         for node in self.deepest:
             node.implementChildren()
-            print node.getChildren()
+            print 'after implementchild ',node.getChildren(),'\n'
             newDeep |= set(node.getChildren())
+        print newDeep
         self.deepest = newDeep
         self.depth += 1
         
@@ -170,11 +173,12 @@ class Tree:
         return out
 
     def test(self):
-        print 'zeroth: '+str(self.deepest)
+        print '\n\nzeroth: \n\n'+str(self.deepest)
         self.implementLevel()
-        print 'first: ' +str(self.deepest)
+        print '\n\nfirst: \n\n' +str(self.deepest)
         self.implementLevel()
-        print 'second: '+str(self.deepest)
+        print '\n\nsecond: \n\n'+str(self.deepest)
+        exit()
 
 class Bot:
     value = {'P':1,
@@ -228,8 +232,6 @@ if __name__ == '__main__':
 
     t = Tree(b, b.turn) 
     t.test()
-    exit()
-
 
     print t.minimax(3)
     print '\n\n'

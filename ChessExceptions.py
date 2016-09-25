@@ -20,7 +20,7 @@ class AmbiguousMoveException(ChessException):
     def __str__(self):
         return "Ambigous Move: " + str(self.string)
 
-class checkMateException(ChessException):
+class CheckMateException(ChessException):
     def __init__(self, winner):
         self.winner = winner
 
