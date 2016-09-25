@@ -224,21 +224,14 @@ def analyzeMaterial(board):
     return float(white - black)
 
 if __name__ == '__main__':
-    f = open('matein3.txt','r')
+    f = open('matein2.txt','r')
     fen = f.read()
     b = Board.Board()
     b.setUp(fen)
     print b
 
     t = Tree(b, b.turn) 
-    t.test()
 
     print t.minimax(3)
-    print '\n\n'
-    print t.root
-    print t.root.children[0]
-    print t.root.children[0].children[0]
-    exit()
-    print t
 
 
