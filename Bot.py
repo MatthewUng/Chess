@@ -1,5 +1,6 @@
 from collections import deque
 import Board
+import time
 
 class Node:
     def __init__(self,board, move = None):
@@ -21,11 +22,9 @@ class Node:
     def implementChildren(self):
         """implement all the possible children for the node"""
         for move in self.board.getMoves(self.turn):
-            print move
             temp = self.moves[:]
             temp.append(move)
             self.setChild(Node(self.board.implementMove(move), temp))
-        print 'done implementingchildren'
             
     def reset(self):
         self.evaluation = None
@@ -84,21 +83,21 @@ class Node:
             #maximizer 
             if self.turn == 'white':
                 #pruning
-                if child.getEval() < b:
-                    self.setEval((child, child.getEval()))
+                if child.getEval() < beta:
+#                    self.setEval((child, child.getEval()))
                     break
-                elif child.getEval() > self.getEval():
-                    self.setEval((child, child.getEval())) 
+                elif child.getEval()[1] > self.getEval()[1]:
+                    self.setEval((child, child.getEval()[1])) 
                     alpha = child.getEval()
 
             #minimizer
             elif self.turn == 'black':
                 #pruning
-                if child.getEval() > a:
-                    self.setEval((child, child.getEval()))
+                if child.getEval()[1] > alpha:
+#                    self.setEval((child, child.getEval()[1]))
                     break
-                elif child.getEval() < self.getEval():
-                    self.setEval((child, child.getEval())) 
+                elif child.getEval()[1]< self.getEval()[1]:
+                    self.setEval((child, child.getEval()[1])) 
                     beta = child.getEval()
 
     def __repr__(self):
@@ -135,16 +134,15 @@ class Tree:
         newDeep = set()
         for node in self.deepest:
             node.implementChildren()
-            print 'after implementchild ',node.getChildren(),'\n'
             newDeep |= set(node.getChildren())
-        print newDeep
         self.deepest = newDeep
         self.depth += 1
         
     def minimax(self, n):
-        if n > self.depth:
+        while n > self.depth:
             self.implementLevel()
-        print self.deepest
+            print 'ok'
+        print len(self.deepest)
         self.reset()
         out = self.root.findBest()
         return out
@@ -202,10 +200,10 @@ def evaluate(board):
     return mat + mate + Range
 
 def analyzeMate(board):
-    if board.mateCheck(board.turn):
-        if board.turn == 'white':
-            return 1000
-        else: return -1000
+    if board.mateCheck('white'):
+        return -1000.0
+    elif board.mateCheck('black'):
+        return 1000.0
     return 0.0
 
 def analyzeRange(board):
@@ -231,7 +229,8 @@ if __name__ == '__main__':
     print b
 
     t = Tree(b, b.turn) 
-
+    start_time = time.time()
     print t.minimax(3)
-
+    end_time = time.time()
+    print "{} seconds to compute".format(end_time - start_time)
 

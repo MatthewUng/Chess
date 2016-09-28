@@ -277,8 +277,6 @@ class Board:
                         self.board[x][y] = (ppiece,self.turn)
                     else:
                         ppiece = raw_input('Pick a piece to promote to: ')
-                        if ppiece == 'print':
-                            print repr(self)
                         while ppiece not in Board.pieces or\
                         ppiece == 'P':
                             ppiece = raw_input('Pick a piece to promote to: ')
