@@ -567,6 +567,7 @@ class Board:
                     for end in kingCheck(l):
                         if not self.moveCheck(piece, l, end, side):
                             out.append((piece, l, end, None))
+
             elif piece == 'P':
                 for l in set(loc):
                     for end in pawnCheck(l):
@@ -602,32 +603,28 @@ class Board:
             out = set()
             for i in range(1,8-y):
                 if self.board[x][y+i][1] != 'None':
-                    if self.board[x][y+i][1] != side:
-                        out |= set([bta(x,y+i)])
+                    out |= set([bta(x,y+i)])
                     break
                 else:
                     out |= set([bta(x,y+i)])
 
             for i in range(1,y+1):
                 if self.board[x][y-i][1] != 'None':
-                    if self.board[x][y-i][1] != side:
-                        out |= set([bta(x,y-i)])
+                    out |= set([bta(x,y-i)])
                     break
                 else:
                     out |= set([bta(x,y-i)])
 
             for i in range(1,8-x):
                 if self.board[x+i][y][1] != 'None':
-                    if self.board[x+i][y][1] != side:
-                        out |= set([bta(x+i,y)])
+                    out |= set([bta(x+i,y)])
                     break
                 else:
                     out |= set([bta(x+i,y)])
 
             for i in range(1,x+1):
                 if self.board[x-i][y][1] != 'None':
-                    if self.board[x-i][y][1] != side:
-                        out |= set([bta(x-i,y)])
+                    out |= set([bta(x-i,y)])
                     break
                 else:
                     out |= set([bta(x-i,y)])
@@ -642,8 +639,7 @@ class Board:
             
             for i in range(1, min(x+1, 8-y)):
                 if self.board[x-i][y+i][1] != 'None':
-                    if self.board[x-i][y+i][1] != side:
-                        out |= set([bta(x-i,y+i)])
+                    out |= set([bta(x-i,y+i)])
                     break
                 else:
                     out |= set([bta(x-i,y+i)])
@@ -651,8 +647,7 @@ class Board:
             #upper left diag 
             for i in range(1, min(x+1, y+1)):
                 if self.board[x-i][y-i][1] != 'None':
-                    if self.board[x-i][y-i][1] != side:
-                        out |= set([bta(x-i,y-i)])
+                    out |= set([bta(x-i,y-i)])
                     break
                 else:
                     out |= set([bta(x-i,y-i)])
@@ -660,8 +655,7 @@ class Board:
             #lower right diag
             for i in range(1, min(8-x, 8-y)):
                 if self.board[x+i][y+i][1] != 'None':
-                    if self.board[x+i][y+i][1] != side:
-                        out |= set([bta(x+i,y+i)])
+                    out |= set([bta(x+i,y+i)])
                     break
                 else:
                     out |= set([bta(x+i,y+i)])
@@ -669,8 +663,7 @@ class Board:
             #lower left diag
             for i in range(1, min(8-x, y+1)):
                 if self.board[x+i][y-i][1] != 'None':
-                    if self.board[x+i][y-i][1] != side:
-                        out |= set([bta(x+i,y-i)])
+                    out |= set([bta(x+i,y-i)])
                     break
                 else:
                     out |= set([bta(x+i,y-i)])
@@ -958,7 +951,7 @@ class Board:
     def promote(self, x, y, piece):
         self.board[x][y] = (piece, self.board[x][y][1])   
 
-    def getD(self):
+    def getB(self):
         return self.board
 
     def __getitem__(self, key):
@@ -1047,13 +1040,13 @@ def bta(x,y):
 
 
 def test():
-    f = open('matein3.txt','r')
+    f = open('test.txt','r')
     fen = f.read()
     b = Board()
     b.setUp(fen)
-    b.move('Qxb8')
-    #('p','d2','e1','R')
-    b.forceMove(('P','e1','d2','R'))
+    print b
+    for move in b.getMoves('white'):
+        print move
     exit()
 
 if __name__ == '__main__':

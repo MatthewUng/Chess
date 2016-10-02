@@ -1,5 +1,6 @@
 from collections import deque
 import Board
+import sys
 import time
 
 class Node:
@@ -8,11 +9,14 @@ class Node:
         self.turn = self.board.turn
         self.children = list()
         self.parent = None
-        self.evaluation = None #(board object, evaluation)
+        #(board object, evaluation)
+        self.evaluation = [None, None]
+        self.alphabeta = [None,None]
         if move == None:
             self.moves = list()
         else:
             self.moves = move
+        
 
     def parseLevel(self):
         posneg = 1 if self.turn == 'white' else -1
@@ -25,9 +29,12 @@ class Node:
             temp = self.moves[:]
             temp.append(move)
             self.setChild(Node(self.board.implementMove(move), temp))
-            
+        for child in self.children:
+            child.parent = self
+
     def reset(self):
-        self.evaluation = None
+        self.evaluation = [None,None]
+        self.alphabeta = [-9999999,9999999]
         #propagate down
         for node in self.children:
             node.reset()
@@ -63,45 +70,60 @@ class Node:
 
     def findBest(self):
         """self node is the root node"""
-        self.minimax(None, None)
+        self.minimax()
         return self.getEval()
 
-    def minimax(self, alpha, beta):
+    def minimax(self):
         #function determines the value of self node
         #while iterating through the tree
+        if self.parent:
+            self.alphabeta[0] = self.parent.alphabeta[0]
+            self.alphabeta[1] = self.parent.alphabeta[1]
+
+
+        #eval = (Node, eval)
         if self.isLeaf():
-            self.setEval((None, evaluate(self.getBoard())))
+            self.setEval([self.moves, evaluate(self.board)])
             return
+            
 
         for child in self.children:
             #obtain value of child
-            child.minimax(alpha,beta) 
+            child.minimax()
+
             #no choice made yet
-            if not self.getEval():
-                self.setEval(child.getEval())
+            if not self.getEval()[1]:
+                if self.turn == 'white':
+                    self.setEval([child.moves, child.getEval()[1]])
+                    if child.getEval()[1] > self.alphabeta[0]:
+                        self.alphabeta[0] = child.getEval()[1]
+
+                elif self.turn == 'black':
+                    self.setEval([child.moves, child.getEval()[1]])
+                    if child.getEval()[1] < self.alphabeta[1]:
+                        self.alphabeta[1] = child.getEval()[1]
 
             #maximizer 
             if self.turn == 'white':
                 #pruning
-                if child.getEval() < beta:
-#                    self.setEval((child, child.getEval()))
+                if child.getEval()[1] > self.alphabeta[1]:
                     break
                 elif child.getEval()[1] > self.getEval()[1]:
-                    self.setEval((child, child.getEval()[1])) 
-                    alpha = child.getEval()
+                    self.alphabeta[0] = child.getEval()[1]
+                    self.setEval([child.moves, child.getEval()[1]])
 
             #minimizer
             elif self.turn == 'black':
                 #pruning
-                if child.getEval()[1] > alpha:
-#                    self.setEval((child, child.getEval()[1]))
+                if child.getEval()[1] < self.alphabeta[0]:
                     break
                 elif child.getEval()[1]< self.getEval()[1]:
-                    self.setEval((child, child.getEval()[1])) 
-                    beta = child.getEval()
+                    self.alphabeta[1] = child.getEval()[1]
+                    self.setEval([child.moves, child.getEval()[1]])
 
     def __repr__(self):
-        return "node: "+str(self.moves)
+        return "<node: "+str(self.moves)+'eval: '+str(self.getEval())+\
+        'a/b: '+str(self.alphabeta)+">"
 
 class Tree:
 
@@ -139,14 +161,19 @@ class Tree:
         self.depth += 1
         
     def minimax(self, n):
+        start = time.time()
         while n > self.depth:
             self.implementLevel()
-            print 'ok'
-        print len(self.deepest)
+            print 'current depth:', self.depth
+
+        end = time.time()
+        print '# leaf nodes: ', len(self.deepest), '\n'
+        print "Took {} seconds to init tree".format(end - start)
         self.reset()
         out = self.root.findBest()
+        
         return out
-
+    
     def __repr__(self):
         out = ''
         queue = deque()
@@ -197,20 +224,23 @@ def evaluate(board):
     mat = analyzeMaterial(board)
     mate = analyzeMate(board)
     Range = analyzeRange(board)
-    return mat + mate + Range
+    if mate[0]:
+        out = -1000 if mate[1] == 'white' else 1000
+        return out
+    return mat + Range
 
 def analyzeMate(board):
     if board.mateCheck('white'):
-        return -1000.0
+        return (True, 'white')
     elif board.mateCheck('black'):
-        return 1000.0
-    return 0.0
+        return (True,'black')
+    return (False,'temp')
 
 def analyzeRange(board):
     return len(board.attackRange(board.turn))* .02
 
 def analyzeMaterial(board):
-    board=board.getD()
+    board=board.getB()
     white = 0
     black = 0
     for x in range(8):
