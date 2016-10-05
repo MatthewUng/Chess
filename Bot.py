@@ -1,3 +1,4 @@
+from ChessExceptions import *
 from collections import deque
 import Board
 import sys
@@ -28,6 +29,7 @@ class Node:
         for move in self.board.getMoves(self.turn):
             temp = self.moves[:]
             temp.append(move)
+            print move
             self.setChild(Node(self.board.implementMove(move), temp))
         for child in self.children:
             child.parent = self
@@ -164,11 +166,11 @@ class Tree:
         start = time.time()
         while n > self.depth:
             self.implementLevel()
-            print 'current depth:', self.depth
+#            print 'current depth:', self.depth
 
         end = time.time()
-        print '# leaf nodes: ', len(self.deepest), '\n'
-        print "Took {} seconds to init tree".format(end - start)
+#        print '# leaf nodes: ', len(self.deepest), '\n'
+#        print "Took {} seconds to init tree".format(end - start)
         self.reset()
         out = self.root.findBest()
         
@@ -198,19 +200,60 @@ class Tree:
         return out
 
     def test(self):
-        print '\n\nzeroth: \n\n'+str(self.deepest)
-        self.implementLevel()
-        print '\n\nfirst: \n\n' +str(self.deepest)
-        self.implementLevel()
-        print '\n\nsecond: \n\n'+str(self.deepest)
+        move = self.minimax(3)
+        print move
         exit()
 
 class Bot:
-    value = {'P':1,
-             'N':3,
-             'B':3,
-             'R':5,
-             'Q':9}
+    def __init__(self, board):
+        self.b = board
+
+    def getMove(self):
+        print self.b
+        print self.b.turn
+        t = Tree(self.b, self.b.turn)
+        move = t.minimax(3)
+        s = move[0][0][0] + move[0][0][1]+move[0][0][2]
+        if move[0][0][3]:
+            s += move[0][0][3]
+        print s
+        return s
+
+    def makeMove(self):
+        move = self.getMove()
+        self.b.move(move)
+
+    def playerMove(self):
+        print '\n'
+        print self.b
+        print "It is "+self.b.turn+" to move."
+        print "ctrl + c to quit"
+        move = raw_input("Make a move: ")
+        return move
+
+    def run(self):
+        while True:
+            move = self.playerMove()
+            try:
+                self.b.move(move)
+            except InvalidMoveException:
+                print "\nThe move "+move+" is invalid."
+                continue
+            except AmbiguousMoveException:
+                print "\nThe move "+move+" is ambiguous."
+                continue
+            except CheckMateException as e:
+                print '\n',b
+                print e
+                exit(0)
+            except KeyboardInterrupt:
+                print "Thanks for playing"
+                sys.exit(0)
+            print self.b
+            botmove = self.getMove()
+            print self.b
+            print "bot made the move: {}".format(botmove)
+            print self.b
 
 value = {'P':1,
          'N':3,
@@ -252,15 +295,10 @@ def analyzeMaterial(board):
     return float(white - black)
 
 if __name__ == '__main__':
-    f = open('matein2.txt','r')
-    fen = f.read()
     b = Board.Board()
-    b.setUp(fen)
-    print b
-
-    t = Tree(b, b.turn) 
-    start_time = time.time()
-    print t.minimax(3)
-    end_time = time.time()
-    print "{} seconds to compute".format(end_time - start_time)
-
+    b.move('e4')
+    t = Tree(b,b.turn)
+    t.test()
+    temp = Board.Board()
+    b = Bot(temp)
+    b.run()

@@ -1040,12 +1040,10 @@ def bta(x,y):
 
 
 def test():
-    f = open('test.txt','r')
-    fen = f.read()
     b = Board()
-    b.setUp(fen)
+    b.move('e4')
     print b
-    for move in b.getMoves('white'):
+    for move in b.getMoves('black'):
         print move
     exit()
 
