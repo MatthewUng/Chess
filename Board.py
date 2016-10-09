@@ -217,7 +217,6 @@ class Board:
         else:
             #move = (piece, end, restrict, promo)
             move = self.parseMove(move)
-
             #error
             if not move:
                 raise InvalidMoveException(move)
@@ -264,8 +263,7 @@ class Board:
             piecedict[piece].remove(moves[0])
             piecedict[piece].add(end) 
 
-            
-            if end not in self.ep:
+            if end not in self.ep or piece != 'P':
                 del self.ep[:]
 
             #ep case
@@ -1042,9 +1040,10 @@ def bta(x,y):
 def test():
     b = Board()
     b.move('e4')
-    print b
-    for move in b.getMoves('black'):
-        print move
+    b.move('a5')
+    b.move('Ba6')
+    b.move('bxa6')
+    print repr(b)
     exit()
 
 if __name__ == '__main__':

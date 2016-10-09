@@ -29,7 +29,7 @@ class Node:
         for move in self.board.getMoves(self.turn):
             temp = self.moves[:]
             temp.append(move)
-            print move
+            print temp
             self.setChild(Node(self.board.implementMove(move), temp))
         for child in self.children:
             child.parent = self
